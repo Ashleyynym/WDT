@@ -1,0 +1,198 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ _('Cargo Management') }}</h1>
+        {% if current_user.can_edit_cargo() %}
+        <a href="{{ url_for('cargo.cargo_create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> {{ _('Add New Cargo') }}
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ _('Filters') }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label for="status" class="form-label">{{ _('Status') }}</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">{{ _('All Statuses') }}</option>
+                        <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>{{ _('In Progress') }}</option>
+                        <option value="Completed" {% if request.args.get('status') == 'Completed' %}selected{% endif %}>{{ _('Completed') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="mawb" class="form-label">{{ _('MAWB') }}</label>
+                    <input type="text" class="form-control" id="mawb" name="mawb" 
+                           value="{{ request.args.get('mawb', '') }}" placeholder="{{ _('Search MAWB') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="flight" class="form-label">{{ _('Flight No.') }}</label>
+                    <input type="text" class="form-control" id="flight" name="flight" 
+                           value="{{ request.args.get('flight', '') }}" placeholder="{{ _('Search Flight') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="customer" class="form-label">{{ _('Customer') }}</label>
+                    <input type="text" class="form-control" id="customer" name="customer" 
+                           value="{{ request.args.get('customer', '') }}" placeholder="{{ _('Search Customer') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="responsible" class="form-label">{{ _('Responsible') }}</label>
+                    <select class="form-select" id="responsible" name="responsible">
+                        <option value="">{{ _('All Users') }}</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if request.args.get('responsible')|int == user.id %}selected{% endif %}>{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="d-grid gap-2 w-100">
+                        <button type="submit" class="btn btn-primary">{{ _('Filter') }}</button>
+                        <a href="{{ url_for('cargo.cargo_list') }}" class="btn btn-outline-secondary">{{ _('Clear') }}</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cargo List -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ _('Cargo List') }} ({{ cargos|length }} {{ _('items') }})</h5>
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                    {{ _('Export') }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('cargo.export_excel') }}">{{ _('Export to Excel') }}</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('cargo.export_csv') }}">{{ _('Export to CSV') }}</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if cargos %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>{{ _('MAWB') }}</th>
+        <th>{{ _('Flight No.') }}</th>
+        <th>{{ _('Customer') }}</th>
+        <th>{{ _('ETA') }}</th>
+        <th>{{ _('Status') }}</th>
+                            <th>{{ _('LFD Days') }}</th>
+                            <th>{{ _('Responsibles') }}</th>
+        <th>{{ _('Actions') }}</th>
+    </tr>
+                    </thead>
+                    <tbody>
+    {% for cargo in cargos %}
+    <tr>
+                            <td>
+                                <a href="{{ url_for('cargo.cargo_detail', cargo_id=cargo.id) }}" class="fw-bold">
+                                    {{ cargo.main_awb }}
+                                </a>
+                            </td>
+                            <td>{{ cargo.flight_no or '—' }}</td>
+                            <td>{{ cargo.customer_name or '—' }}</td>
+                            <td>
+                                {% if cargo.eta %}
+                                    {{ cargo.eta.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if cargo.status == 'In Progress' %}bg-warning{% elif cargo.status == 'Completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ cargo.status or '—' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if cargo.is_approaching_lfd() %}
+                                    <span class="text-danger fw-bold">{{ cargo.get_lfd_days_left() }} {{ _('days') }}</span>
+                                {% elif cargo.get_lfd_days_left() is not none %}
+                                    {{ cargo.get_lfd_days_left() }} {{ _('days') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cargo.responsibles %}
+                                    {% for user in cargo.responsibles %}
+                                        <span class="badge bg-info me-1">{{ user.username }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('cargo.cargo_detail', cargo_id=cargo.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="{{ _('View Details') }}">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if current_user.can_edit_cargo() %}
+                                    <a href="{{ url_for('cargo.edit_cargo', cargo_id=cargo.id) }}" 
+                                       class="btn btn-sm btn-outline-secondary" title="{{ _('Edit') }}">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-sm btn-outline-info dropdown-toggle dropdown-toggle-split" 
+                                            data-bs-toggle="dropdown" title="{{ _('More Actions') }}">
+                                        <span class="visually-hidden">{{ _('More actions') }}</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        {% if current_user.can_upload_attachments() %}
+                                        <li><a class="dropdown-item" href="{{ url_for('attachments.list_attachments', cargo_id=cargo.id) }}">
+                                            <i class="fas fa-paperclip"></i> {{ _('View Attachments') }}
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('attachments.list_attachments', cargo_id=cargo.id) }}?upload=true">
+                                            <i class="fas fa-upload"></i> {{ _('Upload Attachment') }}
+                                        </a></li>
+                                        {% endif %}
+                                        {% if current_user.can_create_bills() %}
+                                        <li><a class="dropdown-item" href="{{ url_for('bills.list_bills', cargo_id=cargo.id) }}">
+                                            <i class="fas fa-file-invoice"></i> {{ _('View Bills') }}
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('bills.list_bills', cargo_id=cargo.id) }}?add=true">
+                                            <i class="fas fa-plus"></i> {{ _('Add Bill') }}
+                                        </a></li>
+                                        {% endif %}
+                                        {% if current_user.can_send_emails() %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ url_for('email_center.send_business_email', cargo_id=cargo.id) }}">
+                                            <i class="fas fa-envelope"></i> {{ _('Send Email') }}
+                                        </a></li>
+                                        {% endif %}
+                                        <li><a class="dropdown-item" href="{{ url_for('cargo.record_event', cargo_id=cargo.id) }}">
+                                            <i class="fas fa-history"></i> {{ _('Record Event') }}
+                                        </a></li>
+                                    </ul>
+                                </div>
+        </td>
+    </tr>
+    {% endfor %}
+                    </tbody>
+</table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">{{ _('No cargo found') }}</h5>
+                <p class="text-muted">{{ _('Try adjusting your filters or add new cargo.') }}</p>
+                {% if current_user.can_edit_cargo() %}
+                <a href="{{ url_for('cargo.cargo_create') }}" class="btn btn-primary">
+                    {{ _('Add First Cargo') }}
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

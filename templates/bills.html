@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>{{ _('Bills for') }} {{ cargo.main_awb if cargo else "" }}</h1>
+
+<h2>{{ _('Existing Bills') }}</h2>
+<table border="1">
+    <tr>
+        <th>{{ _('Supplier') }}</th>
+        <th>{{ _('Category') }}</th>
+        <th>{{ _('Amount') }}</th>
+        <th>{{ _('Currency') }}</th>
+        <th>{{ _('Status') }}</th>
+        <th>{{ _('Uploaded By') }}</th>
+        <th>{{ _('Notes') }}</th>
+    </tr>
+    {% for bill in bills %}
+    <tr>
+        <td>{{ bill.supplier_name }}</td>
+        <td>{{ bill.category }}</td>
+        <td>{{ bill.amount }}</td>
+        <td>{{ bill.currency }}</td>
+        <td>{{ bill.payment_status }}</td>
+        <td>{{ bill.uploaded_by.username }}</td>
+        <td>{{ bill.notes }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>{{ _('Add New Bill') }}</h2>
+<form method="POST" action="{{ url_for('bills.add_bill', cargo_id=cargo.id) }}" enctype="multipart/form-data">
+    <label for="supplier_name">{{ _('Supplier Name:') }}</label>
+    <input type="text" name="supplier_name" required><br>
+
+    <label for="category">{{ _('Category:') }}</label>
+    <select name="category" required>
+        <option value="航司">{{ _('Airline') }}</option>
+        <option value="卡车">{{ _('Trucking') }}</option>
+        <option value="CES">{{ _('CES') }}</option>
+        <option value="销毁公司">{{ _('Destruction Co.') }}</option>
+    </select><br>
+
+    <label for="amount">{{ _('Amount:') }}</label>
+    <input type="number" step="0.01" name="amount" required><br>
+
+    <label for="currency">{{ _('Currency:') }}</label>
+    <input type="text" name="currency" value="USD" required><br>
+
+    <label for="payment_status">{{ _('Payment Status:') }}</label>
+    <select name="payment_status">
+        <option value="未支付">{{ _('Unpaid') }}</option>
+        <option value="已支付">{{ _('Paid') }}</option>
+    </select><br>
+
+    <label for="bill_file">{{ _('Upload Bill (image or PDF):') }}</label>
+    <input type="file" name="bill_file"><br>
+
+    <label for="notes">{{ _('Notes:') }}</label>
+    <textarea name="notes"></textarea><br>
+
+    <button type="submit">{{ _('Save') }}</button>
+</form>
+{% endblock %}

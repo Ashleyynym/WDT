@@ -1,0 +1,338 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+/* Make permission boxes uniform in size */
+.table th.text-center,
+.table td.text-center {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    text-align: center;
+    height: 60px;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+/* Make permission headers smaller and scrollable */
+.table th.text-center {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 8px 4px;
+    height: 60px;
+    overflow-y: auto;
+    word-wrap: break-word;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+/* Adjust role column width */
+.table th:first-child,
+.table td:first-child {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+    word-wrap: break-word;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+/* Make badges consistent size */
+.badge {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+/* Ensure table doesn't overflow */
+.table-responsive {
+    overflow-x: auto;
+}
+</style>
+
+<h1>{{ _('User & Role Management') }}</h1>
+
+<!-- Roles and Permissions Table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>{{ _('Roles and Permissions') }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>{{ _('Role') }}</th>
+                        {% for permission in all_permissions %}
+                        <th class="text-center">{{ permissions[permission] }}</th>
+                        {% endfor %}
+                        <th>{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for role in roles %}
+                    <tr>
+                        <td><strong>{{ role.name }}</strong></td>
+                        {% for permission in all_permissions %}
+                        <td class="text-center">
+                            {% set role_permissions = role.permissions|from_json if role.permissions else [] %}
+                            {% if permission in role_permissions %}
+                            <span class="badge bg-success">✓</span>
+                            {% else %}
+                            <span class="badge bg-secondary">✗</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editRolePermissions({{ role.id }}, '{{ role.name }}', {{ role.permissions|from_json if role.permissions else '[]' }})">
+                                {{ _('Edit') }}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Users Management Table -->
+<div class="card">
+    <div class="card-header">
+        <h3>{{ _('User Management') }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>{{ _('Username') }}</th>
+                        <th>{{ _('Email') }}</th>
+                        <th>{{ _('Role') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th>{{ _('Created') }}</th>
+                        {% for permission in all_permissions %}
+                        <th class="text-center">{{ permissions[permission] }}</th>
+                        {% endfor %}
+                        <th>{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.role.name if user.role else 'No Role' }}</td>
+                        <td>
+                            {% if user.is_active %}
+                            <span class="badge bg-success">{{ _('Active') }}</span>
+                            {% else %}
+                            <span class="badge bg-danger">{{ _('Inactive') }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '' }}</td>
+                        {% for permission in all_permissions %}
+                        <td class="text-center">
+                            {% if user.has_permission(permission) %}
+                            <span class="badge bg-success">✓</span>
+                            {% else %}
+                            <span class="badge bg-secondary">✗</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editUserPermissions({{ user.id }}, '{{ user.username }}', {{ user.role.permissions|from_json if user.role and user.role.permissions else '[]' }})">
+                                {{ _('Edit Permissions') }}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Role Permissions Modal -->
+<div class="modal fade" id="rolePermissionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Edit Role Permissions') }}: <span id="roleName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rolePermissionsForm">
+                    <input type="hidden" id="roleId">
+                    <div class="row">
+                        {% for permission in all_permissions %}
+                        <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="role_{{ permission }}" value="{{ permission }}">
+                                <label class="form-check-label" for="role_{{ permission }}">
+                                    {{ permissions[permission] }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" onclick="saveRolePermissions()">{{ _('Save Changes') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Permissions Modal -->
+<div class="modal fade" id="userPermissionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ _('Edit User Permissions') }}: <span id="userName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userPermissionsForm">
+                    <input type="hidden" id="userId">
+                    <div class="row">
+                        {% for permission in all_permissions %}
+                        <div class="col-md-6 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="user_{{ permission }}" value="{{ permission }}">
+                                <label class="form-check-label" for="user_{{ permission }}">
+                                    {{ permissions[permission] }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserPermissions()">{{ _('Save Changes') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editRolePermissions(roleId, roleName, currentPermissions) {
+    document.getElementById('roleId').value = roleId;
+    document.getElementById('roleName').textContent = roleName;
+    
+    // Clear all checkboxes
+    {% for permission in all_permissions %}
+    document.getElementById('role_{{ permission }}').checked = false;
+    {% endfor %}
+    
+    // Check current permissions
+    currentPermissions.forEach(function(permission) {
+        const checkbox = document.getElementById('role_' + permission);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('rolePermissionsModal')).show();
+}
+
+function editUserPermissions(userId, userName, currentPermissions) {
+    document.getElementById('userId').value = userId;
+    document.getElementById('userName').textContent = userName;
+    
+    // Clear all checkboxes
+    {% for permission in all_permissions %}
+    document.getElementById('user_{{ permission }}').checked = false;
+    {% endfor %}
+    
+    // Check current permissions
+    currentPermissions.forEach(function(permission) {
+        const checkbox = document.getElementById('user_' + permission);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('userPermissionsModal')).show();
+}
+
+function saveRolePermissions() {
+    const roleId = document.getElementById('roleId').value;
+    const permissions = [];
+    
+    {% for permission in all_permissions %}
+    if (document.getElementById('role_{{ permission }}').checked) {
+        permissions.push('{{ permission }}');
+    }
+    {% endfor %}
+    
+    fetch('{{ url_for("users.update_role_permissions") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            role_id: roleId,
+            permissions: permissions
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Role permissions updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating role permissions.');
+    });
+}
+
+function saveUserPermissions() {
+    const userId = document.getElementById('userId').value;
+    const permissions = [];
+    
+    {% for permission in all_permissions %}
+    if (document.getElementById('user_{{ permission }}').checked) {
+        permissions.push('{{ permission }}');
+    }
+    {% endfor %}
+    
+    fetch('{{ url_for("users.update_user_permissions") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            permissions: permissions
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('User permissions updated successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating user permissions.');
+    });
+}
+</script>
+{% endblock %}

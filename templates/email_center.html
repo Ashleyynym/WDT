@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>{{ _('Email Center for') }} {{ cargo.main_awb if cargo else "" }}</h1>
+
+<h2>{{ _('Select/Edit Template and Send') }}</h2>
+<form method="POST" action="{{ url_for('email_center.send_business_email', cargo_id=cargo.id) }}">
+    <label for="template_name">{{ _('Template Name:') }}</label>
+    <input type="text" name="template_name" required><br>
+
+    <label for="to_emails">{{ _('To (comma-separated):') }}</label>
+    <input type="text" name="to_emails" required><br>
+
+    <label for="subject">{{ _('Subject:') }}</label>
+    <input type="text" name="subject" required><br>
+
+    <label for="body">{{ _('Body (HTML allowed):') }}</label><br>
+    <textarea name="body" rows="6" cols="60"></textarea><br>
+
+    <button type="submit">{{ _('Send') }}</button>
+</form>
+
+<h2>{{ _('History') }}</h2>
+<ul>
+    {% for mail in cargo.emails %}
+        <li>{{ mail.sent_at.strftime('%Y-%m-%d %H:%M') }} — {{ mail.subject }} {{ _('to') }} {{ mail.recipients }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

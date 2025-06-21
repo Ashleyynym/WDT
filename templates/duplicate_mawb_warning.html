@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> {{ _('MAWB Already Exists') }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>{{ _('Warning:') }}</strong> {{ _('A cargo with MAWB') }} <strong>{{ pending_data.main_awb }}</strong> {{ _('already exists in the system.') }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>{{ _('Existing Cargo Details:') }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>{{ _('MAWB:') }}</strong></td>
+                                    <td>{{ existing_cargo.main_awb }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('Flight No:') }}</strong></td>
+                                    <td>{{ existing_cargo.flight_no or _('Not specified') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('Customer:') }}</strong></td>
+                                    <td>{{ existing_cargo.customer_name or _('Not specified') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('ETA:') }}</strong></td>
+                                    <td>{{ existing_cargo.eta.strftime('%Y-%m-%d') if existing_cargo.eta else _('Not specified') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('Status:') }}</strong></td>
+                                    <td>{{ existing_cargo.status or _('Not specified') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>{{ _('New Cargo Details:') }}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>{{ _('MAWB:') }}</strong></td>
+                                    <td>{{ pending_data.main_awb }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('Flight No:') }}</strong></td>
+                                    <td>{{ pending_data.flight_no or _('Not specified') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('Customer:') }}</strong></td>
+                                    <td>{{ pending_data.customer_name or _('Not specified') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('ETA:') }}</strong></td>
+                                    <td>{{ pending_data.eta or _('Not specified') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>{{ _('Status:') }}</strong></td>
+                                    <td>{{ pending_data.status or _('Not specified') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <form method="POST" action="{{ url_for('cargo.handle_duplicate_mawb', existing_cargo_id=existing_cargo.id) }}" class="d-inline">
+                            <button type="submit" name="action" value="ok" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> {{ _('Cancel') }}
+                            </button>
+                        </form>
+                        
+                        <form method="POST" action="{{ url_for('cargo.handle_duplicate_mawb', existing_cargo_id=existing_cargo.id) }}" class="d-inline">
+                            <button type="submit" name="action" value="edit" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> {{ _('Update MAWB') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

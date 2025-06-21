@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ _('Attachments for') }} {{ cargo.main_awb if cargo else "" }}</h1>
+
+            <!-- Existing Attachments Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ _('Existing Attachments') }}</h5>
+                    <form method="get" id="fileTypeFilterForm" class="mb-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="fileTypeSelect" class="col-form-label mb-0">{{ _('Filter by File Type:') }}</label>
+                            <select class="form-select form-select-sm" id="fileTypeSelect" name="file_type" onchange="submitFilters()">
+                                <option value="All" {% if selected_file_type == 'All' %}selected{% endif %}>{{ _('All') }}</option>
+                                {% for ft in file_types %}
+                                    <option value="{{ ft }}" {% if selected_file_type == ft %}selected{% endif %}>{{ _(ft) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered mb-0" style="min-width: 900px;">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('File Name') }}</th>
+                                    <th>{{ _('File Type') }}</th>
+                                    <th style="min-width: 180px;">{{ _('Upload Time') }}</th>
+                                    <th style="min-width: 120px;">{{ _('File Size') }}</th>
+                                    <th style="min-width: 150px;">{{ _('Uploaded By') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if attachments %}
+                                    {% for att in attachments %}
+                                    <tr>
+                                        <td><strong>{{ att.original_filename or att.filename }}</strong></td>
+                                        <td>{% if att.file_type %}<span class="badge bg-secondary">{{ att.file_type }}</span>{% endif %}</td>
+                                        <td style="min-width: 180px;">{{ att.local_time.strftime('%Y-%m-%d %H:%M') if att.local_time else att.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td style="min-width: 120px;">{% if att.file_size %}{{ att.get_file_size_mb() }} MB{% endif %}</td>
+                                        <td style="min-width: 150px;">{{ att.uploader.username }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">{{ _('No attachments uploaded yet for this file type.') }}</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload New Attachment Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ _('Upload New Attachment') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('attachments.upload_attachment', cargo_id=cargo.id) }}" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="file_type" class="form-label">{{ _('File Type') }}</label>
+                                <select class="form-select" name="file_type" required>
+                                    <option value="">{{ _('Select file type...') }}</option>
+                                    <option value="ISC Payment">{{ _('ISC Payment') }}</option>
+                                    <option value="DO (Delivery Order)">{{ _('DO (Delivery Order)') }}</option>
+                                    <option value="POD (Proof of Delivery)">{{ _('POD (Proof of Delivery)') }}</option>
+                                    <option value="Inspection Report">{{ _('Inspection Report') }}</option>
+                                    <option value="Destruction Certificate">{{ _('Destruction Certificate') }}</option>
+                                    <option value="Customs Document">{{ _('Customs Document') }}</option>
+                                    <option value="Invoice">{{ _('Invoice') }}</option>
+                                    <option value="Packing List">{{ _('Packing List') }}</option>
+                                    <option value="Airway Bill">{{ _('Airway Bill') }}</option>
+                                    <option value="Other">{{ _('Other') }}</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="files" class="form-label">{{ _('Choose Files') }}</label>
+                                <input type="file" class="form-control" name="files" multiple required>
+                                <div class="form-text">{{ _('You can select multiple files at once.') }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">{{ _('Notes') }}</label>
+                            <textarea class="form-control" name="notes" rows="3" placeholder="{{ _('Add any additional notes about these files...') }}"></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> {{ _('Upload Files') }}
+                            </button>
+                            <a href="{{ url_for('cargo.cargo_detail', cargo_id=cargo.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> {{ _('Back to Cargo Details') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function submitFilters() {
+    const fileTypeSelect = document.getElementById('fileTypeSelect');
+    
+    if (!fileTypeSelect) {
+        console.error('File type select not found');
+        return;
+    }
+    
+    const fileType = fileTypeSelect.value;
+    
+    const params = new URLSearchParams();
+    if (fileType && fileType !== 'All') {
+        params.append('file_type', fileType);
+    }
+    
+    const url = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.location.href = url;
+}
+</script>
+{% endblock %}

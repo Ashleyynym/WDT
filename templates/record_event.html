@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ _('Record Event') }}</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ _('Cargo Information') }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>{{ _('Main AWB:') }}</strong> {{ cargo.main_awb }}</p>
+                    <p><strong>{{ _('Flight No.:') }}</strong> {{ cargo.flight_no or 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>{{ _('Status:') }}</strong> {{ cargo.status or 'N/A' }}</p>
+                    <p><strong>{{ _('ETA:') }}</strong> {{ cargo.eta.strftime('%Y-%m-%d') if cargo.eta else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{ _('Record New Event') }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="description" class="form-label">{{ _('Event Description') }}</label>
+                    <textarea class="form-control" id="description" name="description" rows="4" required 
+                              placeholder="{{ _('Describe what happened (e.g., Payment received, Inspection completed, DO received, etc.)') }}"></textarea>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('cargo.cargo_detail', cargo_id=cargo.id) }}" class="btn btn-secondary">
+                        {{ _('Cancel') }}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        {{ _('Record Event') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{ _('Recent Events') }}</h5>
+        </div>
+        <div class="card-body">
+            {% if cargo.events %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>{{ _('Date/Time') }}</th>
+                                <th>{{ _('Event') }}</th>
+                                <th>{{ _('Recorded By') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in cargo.events|sort(attribute='timestamp', reverse=true)[:10] %}
+                            <tr>
+                                <td>{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ event.description }}</td>
+                                <td>{{ event.performed_by.username if event.performed_by else 'System' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">{{ _('No events recorded yet.') }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

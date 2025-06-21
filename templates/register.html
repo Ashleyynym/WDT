@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm mt-5">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">{{ _('Register') }}</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('users.register') }}" id="registerForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ _('Username') }}</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">{{ _('Email') }}</label>
+                            <input type="email" class="form-control" id="email" name="email" required onblur="validateEmail()">
+                            <div id="emailWarning" class="invalid-feedback" style="display: none;">
+                                {{ _('Please enter a valid email address.') }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ _('Password') }}</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">{{ _('Confirm Password') }}</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            <div id="confirmPasswordWarning" class="invalid-feedback" style="display: none;">
+                                {{ _('Passwords do not match.') }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="role_name" class="form-label">{{ _('Role') }}</label>
+                            <select class="form-select" id="role_name" name="role_name" required>
+                                <option value="">{{ _('Select a role...') }}</option>
+                                {% for role_name in static_roles %}
+                                    <option value="{{ role_name }}">{{ _(role_name) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">{{ _('Register') }}</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p class="text-muted mb-0">{{ _('Already have an account?') }} <a href="{{ url_for('users.login') }}" class="text-decoration-none">{{ _('Login here') }}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function validateEmail() {
+    const emailInput = document.getElementById('email');
+    const emailWarning = document.getElementById('emailWarning');
+    const email = emailInput.value.trim();
+    
+    // Basic email format validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+    if (email && !emailRegex.test(email)) {
+        // Invalid email format
+        emailInput.classList.add('is-invalid');
+        emailInput.classList.remove('is-valid');
+        emailWarning.style.display = 'block';
+        emailWarning.textContent = 'Please enter a valid email address format.';
+    } else if (email && emailRegex.test(email)) {
+        // Check domain validity via AJAX
+        checkEmailDomain(email, emailInput, emailWarning);
+    } else {
+        // Empty email
+        emailInput.classList.remove('is-invalid', 'is-valid');
+        emailWarning.style.display = 'none';
+    }
+}
+
+function validatePasswordConfirmation() {
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    const confirmPasswordWarning = document.getElementById('confirmPasswordWarning');
+    
+    const password = passwordInput.value;
+    const confirmPassword = confirmPasswordInput.value;
+    
+    if (confirmPassword === '') {
+        // Empty confirm password
+        confirmPasswordInput.classList.remove('is-invalid', 'is-valid');
+        confirmPasswordWarning.style.display = 'none';
+    } else if (password === confirmPassword) {
+        // Passwords match
+        confirmPasswordInput.classList.remove('is-invalid');
+        confirmPasswordInput.classList.add('is-valid');
+        confirmPasswordWarning.style.display = 'none';
+    } else {
+        // Passwords don't match
+        confirmPasswordInput.classList.add('is-invalid');
+        confirmPasswordInput.classList.remove('is-valid');
+        confirmPasswordWarning.style.display = 'block';
+        confirmPasswordWarning.textContent = 'Passwords do not match.';
+    }
+}
+
+function checkEmailDomain(email, emailInput, emailWarning) {
+    // Show loading state
+    emailInput.classList.remove('is-invalid', 'is-valid');
+    emailWarning.style.display = 'block';
+    emailWarning.textContent = 'Verifying email address exists...';
+    
+    // Send AJAX request to check email
+    fetch('/users/check_email_domain', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            emailInput.classList.remove('is-invalid');
+            emailInput.classList.add('is-valid');
+            emailWarning.style.display = 'none';
+        } else {
+            emailInput.classList.add('is-invalid');
+            emailInput.classList.remove('is-valid');
+            emailWarning.style.display = 'block';
+            emailWarning.textContent = data.message || 'This email address is invalid or does not exist.';
+        }
+    })
+    .catch(error => {
+        console.error('Error checking email:', error);
+        // Fallback to basic validation
+        emailInput.classList.remove('is-invalid', 'is-valid');
+        emailWarning.style.display = 'none';
+    });
+}
+
+// Wait for DOM to be fully loaded before adding event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    
+    if (emailInput) {
+        emailInput.addEventListener('input', validateEmail);
+        emailInput.addEventListener('blur', validateEmail);
+    }
+    
+    if (passwordInput && confirmPasswordInput) {
+        passwordInput.addEventListener('input', validatePasswordConfirmation);
+        confirmPasswordInput.addEventListener('input', validatePasswordConfirmation);
+        confirmPasswordInput.addEventListener('blur', validatePasswordConfirmation);
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm mt-5">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">{{ _('Login') }}</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('users.login') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">{{ _('Username') }}</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ username or '' }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ _('Password') }}</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">{{ _('Log In') }}</button>
+                        </div>
+                    </form>
+
+                    {% if show_register_option %}
+                    <div class="mt-4 p-3 border border-danger rounded bg-danger bg-opacity-10">
+                        <p class="mb-2"><strong class="text-danger">{{ _('Username not found!') }}</strong></p>
+                        <p class="mb-3">{{ _('The username you entered does not exist in our system.') }}</p>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('users.register') }}" class="btn btn-primary">{{ _('Register New Account') }}</a>
+                            <a href="{{ url_for('users.login') }}" class="btn btn-outline-secondary">{{ _('Try Again') }}</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center mt-3">
+                        <p class="text-muted mb-0">{{ _("Don't have an account?") }} <a href="{{ url_for('users.register') }}" class="text-decoration-none">{{ _('Register here') }}</a></p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
