@@ -7,25 +7,6 @@ from flask_babel import _
 
 bp = Blueprint('email_center', __name__, url_prefix='/email')
 
-<<<<<<< HEAD
-@bp.route('/')
-@login_required
-def email_generation():
-    """General email center page"""
-    mawb_filter = request.args.get('mawb', None)
-    
-    # Build query for email logs
-    query = EmailLog.query.join(Cargo).filter_by(is_archived=False)
-    
-    if mawb_filter:
-        query = query.filter(Cargo.main_awb.contains(mawb_filter))
-    
-    email_logs = query.order_by(EmailLog.sent_at.desc()).all()
-    
-    return render_template('email_center.html', 
-                         email_logs=email_logs,
-                         mawb_filter=mawb_filter)
-=======
 @bp.route('/', methods=['GET'])
 @login_required
 def email_center():
@@ -41,7 +22,6 @@ def email_center():
     return render_template('email_center_main.html', 
                          email_logs=email_logs, 
                          email_templates=email_templates)
->>>>>>> 37c481c (v1.0.1)
 
 @bp.route('/templates', methods=['GET', 'POST'])
 @login_required

@@ -10,33 +10,6 @@ BILL_UPLOAD_FOLDER = 'uploads/bills/'
 
 @bp.route('/')
 @login_required
-<<<<<<< HEAD
-def bill_list():
-    """General bill list page showing all bills"""
-    status_filter = request.args.get('status', None)
-    category_filter = request.args.get('category', None)
-    mawb_filter = request.args.get('mawb', None)
-    
-    # Build query
-    query = Bill.query.join(Cargo).filter_by(is_archived=False)
-    
-    if status_filter and status_filter != 'All':
-        query = query.filter(Bill.payment_status == status_filter)
-    if category_filter and category_filter != 'All':
-        query = query.filter(Bill.category == category_filter)
-    if mawb_filter:
-        query = query.filter(Cargo.main_awb.contains(mawb_filter))
-    
-    bills = query.order_by(Bill.uploaded_at.desc()).all()
-    categories = Bill.get_categories()
-    
-    return render_template('bills_list.html', 
-                         bills=bills, 
-                         categories=categories,
-                         selected_status=status_filter or 'All',
-                         selected_category=category_filter or 'All',
-                         mawb_filter=mawb_filter)
-=======
 def bills_list():
     """General bills list - show all bills for the current user"""
     # Get all bills, optionally filtered by user permissions
@@ -50,7 +23,6 @@ def bills_list():
         ).all()
     
     return render_template('bills_list.html', bills=bills)
->>>>>>> 37c481c (v1.0.1)
 
 @bp.route('/<int:cargo_id>')
 @login_required

@@ -12,24 +12,6 @@ UPLOAD_FOLDER = 'uploads/'
 
 @bp.route('/')
 @login_required
-<<<<<<< HEAD
-def attachment_list():
-    """General attachment list page showing all attachments"""
-    file_type = request.args.get('file_type', None)
-    mawb_filter = request.args.get('mawb', None)
-    timezone = session.get('timezone', 'America/Los_Angeles')
-    file_types = Attachment.get_file_types()
-    
-    # Build query
-    query = Attachment.query.join(Cargo).filter_by(is_archived=False)
-    
-    if file_type and file_type != 'All':
-        query = query.filter(Attachment.file_type == file_type)
-    if mawb_filter:
-        query = query.filter(Cargo.main_awb.contains(mawb_filter))
-    
-    attachments = query.order_by(Attachment.uploaded_at.desc()).all()
-=======
 def attachments_list():
     """General attachments list - show all attachments for the current user"""
     timezone = session.get('timezone', 'America/Los_Angeles')
@@ -44,7 +26,6 @@ def attachments_list():
         attachments = Attachment.query.join(Cargo).filter(
             Cargo.responsibles.any(id=current_user.id)
         ).all()
->>>>>>> 37c481c (v1.0.1)
     
     # Convert times to selected timezone
     tz = pytz.timezone(timezone)
@@ -56,13 +37,7 @@ def attachments_list():
     
     return render_template('attachments_list.html', 
                          attachments=attachments, 
-<<<<<<< HEAD
-                         file_types=file_types, 
-                         selected_file_type=file_type or 'All',
-                         mawb_filter=mawb_filter)
-=======
                          file_types=file_types)
->>>>>>> 37c481c (v1.0.1)
 
 @bp.route('/<int:cargo_id>')
 @login_required
