@@ -10,6 +10,39 @@ import pytz
 bp = Blueprint('attachments', __name__, url_prefix='/attachments')
 UPLOAD_FOLDER = 'uploads/'
 
+@bp.route('/')
+@login_required
+def attachment_list():
+    """General attachment list page showing all attachments"""
+    file_type = request.args.get('file_type', None)
+    mawb_filter = request.args.get('mawb', None)
+    timezone = session.get('timezone', 'America/Los_Angeles')
+    file_types = Attachment.get_file_types()
+    
+    # Build query
+    query = Attachment.query.join(Cargo).filter_by(is_archived=False)
+    
+    if file_type and file_type != 'All':
+        query = query.filter(Attachment.file_type == file_type)
+    if mawb_filter:
+        query = query.filter(Cargo.main_awb.contains(mawb_filter))
+    
+    attachments = query.order_by(Attachment.uploaded_at.desc()).all()
+    
+    # Convert times to selected timezone
+    tz = pytz.timezone(timezone)
+    for attachment in attachments:
+        if attachment.uploaded_at:
+            # Convert UTC to selected timezone
+            utc_time = pytz.utc.localize(attachment.uploaded_at)
+            attachment.local_time = utc_time.astimezone(tz)
+    
+    return render_template('attachments_list.html', 
+                         attachments=attachments, 
+                         file_types=file_types, 
+                         selected_file_type=file_type or 'All',
+                         mawb_filter=mawb_filter)
+
 @bp.route('/<int:cargo_id>')
 @login_required
 def list_attachments(cargo_id):

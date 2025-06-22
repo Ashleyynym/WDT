@@ -10,7 +10,7 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "change_this_to_a_random_secret"
     SQLALCHEMY_DATABASE_URI = (
         os.environ.get("DATABASE_URL")
-        or "sqlite:///" + os.path.join(basedir, "wdt_aircargo.db")
+        or "sqlite:///" + os.path.join(basedir, "wdt_supplychain.db")
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
