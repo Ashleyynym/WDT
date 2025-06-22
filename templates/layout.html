@@ -10,7 +10,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ _('WDT Supply Chain - Air Cargo System') }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
     <style>
         body {
             font-size: .875rem;
@@ -188,53 +187,49 @@
     </style>
 </head>
 <body>
-    <!-- Top navbar -->
-    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{{ url_for('dashboard.dashboard_home') if current_user.is_authenticated else url_for('users.login') }}">
-            {{ _('WDT Supply Chain') }}
-        </a>
-        {% if current_user.is_authenticated %}
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        {% endif %}
-        
-        <!-- Top navbar controls -->
-        <div class="navbar-nav flex-row">
-            {% if current_user.is_authenticated %}
-            <!-- Timezone Selector -->
-            <div class="nav-item dropdown me-2">
-                <select class="form-select form-select-sm form-control-dark" id="globalTimezoneSelect" onchange="changeGlobalTimezone()" style="font-size: 0.8rem; width: auto; min-width: 150px;">
-                    <option value="America/Los_Angeles" {% if session.get('timezone', 'America/Los_Angeles') == 'America/Los_Angeles' %}selected{% endif %}>Los Angeles (PST/PDT)</option>
-                    <option value="America/New_York" {% if session.get('timezone') == 'America/New_York' %}selected{% endif %}>New York (EST/EDT)</option>
-                    <option value="America/Chicago" {% if session.get('timezone') == 'America/Chicago' %}selected{% endif %}>Chicago (CST/CDT)</option>
-                    <option value="America/Denver" {% if session.get('timezone') == 'America/Denver' %}selected{% endif %}>Denver (MST/MDT)</option>
-                    <option value="UTC" {% if session.get('timezone') == 'UTC' %}selected{% endif %}>UTC</option>
-                    <option value="Asia/Shanghai" {% if session.get('timezone') == 'Asia/Shanghai' %}selected{% endif %}>Shanghai (CST)</option>
-                    <option value="Asia/Tokyo" {% if session.get('timezone') == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST)</option>
-                    <option value="Europe/London" {% if session.get('timezone') == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
-                    <option value="Europe/Paris" {% if session.get('timezone') == 'Europe/Paris' %}selected{% endif %}>Paris (CET/CEST)</option>
-                </select>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('WDT Air Cargo') }}</a>
+            
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('Dashboard') }}</a>
+                <a class="nav-link" href="{{ url_for('cargo.cargo_list') }}">{{ _('Cargo Management') }}</a>
+                {% if current_user.is_authenticated and current_user.has_permission('manage_users') %}
+                <a class="nav-link" href="{{ url_for('users.user_management') }}">{{ _('User & Role Mgmt') }}</a>
+                {% endif %}
             </div>
             
-            <!-- Language Switcher -->
-            <div class="nav-item dropdown me-2">
-                <span class="navbar-text me-1 text-light">{{ _('Language:') }}</span>
-                <a class="nav-link d-inline text-light" href="{{ url_for('set_locale', lang_code='en') }}">EN</a>
-                <span class="text-light">|</span>
-                <a class="nav-link d-inline text-light" href="{{ url_for('set_locale', lang_code='zh') }}">中文</a>
-            </div>
-            
-            <!-- User Info -->
-            <div class="nav-item dropdown me-2">
-                <span class="navbar-text me-2 text-light">{{ _('Logged in as') }} {{ current_user.username }}</span>
-                <a class="nav-link text-light" href="{{ url_for('users.logout') }}">{{ _('Sign out') }}</a>
-            </div>
-            {% else %}
-            <!-- Login/Register for non-authenticated users -->
-            <div class="nav-item dropdown me-2">
-                <a class="nav-link text-light" href="{{ url_for('users.login') }}">{{ _('Login') }}</a>
-                <a class="nav-link text-light" href="{{ url_for('users.register') }}">{{ _('Register') }}</a>
+            <div class="navbar-nav ms-auto">
+                <!-- Timezone Selector -->
+                <div class="nav-item dropdown me-3">
+                    <select class="form-select form-select-sm" id="globalTimezoneSelect" onchange="changeGlobalTimezone()" style="font-size: 0.8rem; width: auto; min-width: 150px;">
+                        <option value="America/Los_Angeles" {% if session.get('timezone', 'America/Los_Angeles') == 'America/Los_Angeles' %}selected{% endif %}>Los Angeles (PST/PDT)</option>
+                        <option value="America/New_York" {% if session.get('timezone') == 'America/New_York' %}selected{% endif %}>New York (EST/EDT)</option>
+                        <option value="America/Chicago" {% if session.get('timezone') == 'America/Chicago' %}selected{% endif %}>Chicago (CST/CDT)</option>
+                        <option value="America/Denver" {% if session.get('timezone') == 'America/Denver' %}selected{% endif %}>Denver (MST/MDT)</option>
+                        <option value="UTC" {% if session.get('timezone') == 'UTC' %}selected{% endif %}>UTC</option>
+                        <option value="Asia/Shanghai" {% if session.get('timezone') == 'Asia/Shanghai' %}selected{% endif %}>Shanghai (CST)</option>
+                        <option value="Asia/Tokyo" {% if session.get('timezone') == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST)</option>
+                        <option value="Europe/London" {% if session.get('timezone') == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
+                        <option value="Europe/Paris" {% if session.get('timezone') == 'Europe/Paris' %}selected{% endif %}>Paris (CET/CEST)</option>
+                    </select>
+                </div>
+                
+                <!-- Language Switcher -->
+                <div class="nav-item dropdown me-3">
+                    <span class="navbar-text me-1">{{ _('Language:') }}</span>
+                    <a class="nav-link d-inline" href="{{ url_for('set_locale', lang_code='en') }}">EN</a> |
+                    <a class="nav-link d-inline" href="{{ url_for('set_locale', lang_code='zh') }}">中文</a>
+                </div>
+                
+                <!-- User Info -->
+                {% if current_user.is_authenticated %}
+                    <span class="navbar-text me-2">{{ _('Logged in as') }} {{ current_user.username }}</span>
+                    <a class="nav-link" href="{{ url_for('users.logout') }}">{{ _('Logout') }}</a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('users.login') }}">{{ _('Login') }}</a>
+                    <a class="nav-link" href="{{ url_for('users.register') }}">{{ _('Register') }}</a>
+                {% endif %}
             </div>
             {% endif %}
         </div>
