@@ -10,6 +10,7 @@ BILL_UPLOAD_FOLDER = 'uploads/bills/'
 
 @bp.route('/')
 @login_required
+<<<<<<< HEAD
 def bill_list():
     """General bill list page showing all bills"""
     status_filter = request.args.get('status', None)
@@ -35,6 +36,21 @@ def bill_list():
                          selected_status=status_filter or 'All',
                          selected_category=category_filter or 'All',
                          mawb_filter=mawb_filter)
+=======
+def bills_list():
+    """General bills list - show all bills for the current user"""
+    # Get all bills, optionally filtered by user permissions
+    if current_user.has_permission('manage_users'):
+        # Admin can see all bills
+        bills = Bill.query.all()
+    else:
+        # Regular users see bills for cargos they're responsible for
+        bills = Bill.query.join(Cargo).filter(
+            Cargo.responsibles.any(id=current_user.id)
+        ).all()
+    
+    return render_template('bills_list.html', bills=bills)
+>>>>>>> 37c481c (v1.0.1)
 
 @bp.route('/<int:cargo_id>')
 @login_required

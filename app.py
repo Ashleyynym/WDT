@@ -1,12 +1,24 @@
-from flask import Flask, request, session, redirect, url_for, jsonify
-from flask_login import current_user
+from flask import Flask, request, session, redirect, url_for, jsonify, render_template, flash
+from flask_login import current_user, login_user, logout_user, login_required
 from flask_babel import refresh
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import json
+import logging
 
 from config import Config
 from extensions import db, migrate, login_manager, babel
+
+# Import new backend components
+from models_new import *
+from routes.api import api
+from services.audit_logger import audit_logger, init_audit_logger
+from services.job_scheduler import job_scheduler
+from services.workflow_engine import WorkflowEngine
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Configure locale selector for Flask-Babel 4.x
 # @babel.localeselector
@@ -88,6 +100,24 @@ def create_app():
     login_manager.login_message_category = "info"
     babel.init_app(app)
 
+    # Initialize new backend services
+    with app.app_context():
+        # Initialize audit logger
+        init_audit_logger(app)
+        
+        # Initialize job scheduler
+        job_scheduler.init_app(app)
+        
+        # Start job scheduler in background
+        try:
+            job_scheduler.start()
+            logger.info("Job scheduler started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start job scheduler: {e}")
+
+        # Initialize WorkflowEngine (don't assign to app)
+        workflow_engine = WorkflowEngine()
+
     # Register context processors for timezone utilities
     @app.context_processor
     def inject_timezone_utils():
@@ -127,11 +157,20 @@ def create_app():
     app.register_blueprint(email_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(roles_bp)
+    
+    # Register new API blueprint
+    app.register_blueprint(api)
 
     @app.route("/")
     def index():
         if current_user.is_authenticated:
             return redirect(url_for("dashboard.dashboard_home"))
+        return redirect(url_for("users.login"))
+
+    @app.route("/clear_session")
+    def clear_session():
+        """Clear session and redirect to login"""
+        session.clear()
         return redirect(url_for("users.login"))
 
     @app.route("/set_locale/<lang_code>")
@@ -164,41 +203,64 @@ def create_app():
     @app.route("/detect_timezone", methods=['POST'])
     def detect_timezone():
         data = request.get_json()
-        detected_timezone = data.get('timezone', 'America/Los_Angeles')
+        timezone = data.get('timezone', 'America/Los_Angeles')
         
-        # Validate and map common timezones to our supported ones
-        timezone_mapping = {
-            'America/Los_Angeles': 'America/Los_Angeles',
-            'America/New_York': 'America/New_York',
-            'America/Chicago': 'America/Chicago',
-            'America/Denver': 'America/Denver',
-            'UTC': 'UTC',
-            'Asia/Shanghai': 'Asia/Shanghai',
-            'Asia/Tokyo': 'Asia/Tokyo',
-            'Europe/London': 'Europe/London',
-            'Europe/Paris': 'Europe/Paris'
-        }
+        # Validate timezone
+        valid_timezones = [
+            'America/Los_Angeles', 'America/New_York', 'America/Chicago', 
+            'America/Denver', 'UTC', 'Asia/Shanghai', 'Asia/Tokyo', 
+            'Europe/London', 'Europe/Paris'
+        ]
         
-        # If detected timezone is not in our mapping, default to Los Angeles
-        mapped_timezone = timezone_mapping.get(detected_timezone, 'America/Los_Angeles')
-        session['timezone'] = mapped_timezone
-        
-        return jsonify({
-            'success': True, 
-            'timezone': mapped_timezone,
-            'original_timezone': detected_timezone
-        })
+        if timezone in valid_timezones:
+            session['timezone'] = timezone
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Invalid timezone'})
+
+    @app.route("/mawb-management")
+    def mawb_management():
+        if not current_user.is_authenticated:
+            return redirect(url_for("users.login"))
+        return render_template("mawb_management.html")
+
+    @app.route("/workflow-management")
+    def workflow_management():
+        if not current_user.is_authenticated:
+            return redirect(url_for("users.login"))
+        return render_template("workflow_management.html")
+
+    @app.route("/audit-log")
+    def audit_log():
+        if not current_user.is_authenticated:
+            return redirect(url_for("users.login"))
+        return render_template("audit_log.html")
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return render_template("404.html"), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        return render_template("500.html"), 500
+
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
 
     return app
 
 # Create the app instance
 app = create_app()
 
-# Make get_locale available to all templates
-# app.jinja_env.globals['get_locale'] = get_locale
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0")
 
 
 

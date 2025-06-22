@@ -1,0 +1,664 @@
+{% extends "layout.html" %}
+
+{% block title %}Audit Log - Container Tracking Platform{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Audit Log</h1>
+            <p class="text-muted">Track all changes and activities across the system</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="exportAuditLog()">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <button class="btn btn-outline-primary" onclick="refreshAuditLog()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-2">
+                    <label for="tableFilter" class="form-label">Table</label>
+                    <select class="form-select" id="tableFilter">
+                        <option value="">All Tables</option>
+                        <option value="mawbs">MAWBs</option>
+                        <option value="hawbs">HAWBs</option>
+                        <option value="mawb_events">MAWB Events</option>
+                        <option value="hawb_events">HAWB Events</option>
+                        <option value="mawb_workflows">Workflows</option>
+                        <option value="scheduled_jobs">Scheduled Jobs</option>
+                        <option value="user">Users</option>
+                        <option value="roles">Roles</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="actionFilter" class="form-label">Action</label>
+                    <select class="form-select" id="actionFilter">
+                        <option value="">All Actions</option>
+                        <option value="INSERT">Create</option>
+                        <option value="UPDATE">Update</option>
+                        <option value="DELETE">Delete</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="userFilter" class="form-label">User</label>
+                    <select class="form-select" id="userFilter">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="dateFromFilter" class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="dateFromFilter">
+                </div>
+                <div class="col-md-2">
+                    <label for="dateToFilter" class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="dateToFilter">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="loadAuditLog()">
+                        <i class="fas fa-search"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalEntries">0</h4>
+                            <p class="card-text">Total Entries</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="todayEntries">0</h4>
+                            <p class="card-text">Today's Entries</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar-day fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="activeUsers">0</h4>
+                            <p class="card-text">Active Users</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="recentChanges">0</h4>
+                            <p class="card-text">Recent Changes</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Audit Log Entries</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="auditTable">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Table</th>
+                            <th>Action</th>
+                            <th>Record ID</th>
+                            <th>Changes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <!-- Audit log rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Audit log pagination">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- Pagination will be populated here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Change Details Modal -->
+<div class="modal fade" id="changeDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Before</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <pre id="oldValues" class="mb-0"></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>After</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <pre id="newValues" class="mb-0"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Change Summary</h6>
+                        <div id="changeSummary">
+                            <!-- Change summary will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Activity Modal -->
+<div class="modal fade" id="userActivityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userActivityContent">
+                <!-- User activity will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record History Modal -->
+<div class="modal fade" id="recordHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="recordHistoryContent">
+                <!-- Record history will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let currentPage = 1;
+let totalPages = 1;
+let auditLogs = [];
+let users = [];
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadAuditLogStats();
+    loadUsers();
+    loadAuditLog();
+    setupEventListeners();
+});
+
+// Setup event listeners
+function setupEventListeners() {
+    // Filters
+    document.getElementById('tableFilter').addEventListener('change', loadAuditLog);
+    document.getElementById('actionFilter').addEventListener('change', loadAuditLog);
+    document.getElementById('userFilter').addEventListener('change', loadAuditLog);
+    document.getElementById('dateFromFilter').addEventListener('change', loadAuditLog);
+    document.getElementById('dateToFilter').addEventListener('change', loadAuditLog);
+}
+
+// Load audit log statistics
+async function loadAuditLogStats() {
+    try {
+        // Get total entries
+        const totalResponse = await fetch('/api/v1/audit-log?per_page=1');
+        const totalData = await totalResponse.json();
+        document.getElementById('totalEntries').textContent = totalData.pagination.total;
+        
+        // Get today's entries
+        const today = new Date().toISOString().split('T')[0];
+        const todayResponse = await fetch(`/api/v1/audit-log?date_from=${today}`);
+        const todayData = await todayResponse.json();
+        document.getElementById('todayEntries').textContent = todayData.pagination.total;
+        
+        // Get recent changes (last 24 hours)
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const recentResponse = await fetch(`/api/v1/audit-log?date_from=${yesterday}`);
+        const recentData = await recentResponse.json();
+        document.getElementById('recentChanges').textContent = recentData.pagination.total;
+        
+        // Get active users (users who made changes in last 7 days)
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const activeResponse = await fetch(`/api/v1/audit-log?date_from=${weekAgo}`);
+        const activeData = await activeResponse.json();
+        const activeUsers = new Set(activeData.logs.map(log => log.changed_by).filter(Boolean));
+        document.getElementById('activeUsers').textContent = activeUsers.size;
+    } catch (error) {
+        console.error('Error loading audit log stats:', error);
+    }
+}
+
+// Load users for filter
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/v1/users');
+        const data = await response.json();
+        users = data.users || [];
+        
+        const userFilter = document.getElementById('userFilter');
+        users.forEach(user => {
+            userFilter.innerHTML += `<option value="${user.id}">${user.username}</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
+
+// Load audit log entries
+async function loadAuditLog(page = 1) {
+    try {
+        const tableFilter = document.getElementById('tableFilter').value;
+        const actionFilter = document.getElementById('actionFilter').value;
+        const userFilter = document.getElementById('userFilter').value;
+        const dateFrom = document.getElementById('dateFromFilter').value;
+        const dateTo = document.getElementById('dateToFilter').value;
+        
+        let url = `/api/v1/audit-log?page=${page}`;
+        if (tableFilter) url += `&table_name=${tableFilter}`;
+        if (actionFilter) url += `&action=${actionFilter}`;
+        if (userFilter) url += `&user_id=${userFilter}`;
+        if (dateFrom) url += `&date_from=${dateFrom}`;
+        if (dateTo) url += `&date_to=${dateTo}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        auditLogs = data.logs;
+        displayAuditLog(auditLogs);
+        displayPagination(data.pagination);
+        
+        currentPage = data.pagination.page;
+        totalPages = data.pagination.pages;
+    } catch (error) {
+        console.error('Error loading audit log:', error);
+        showAlert('Error loading audit log', 'error');
+    }
+}
+
+// Display audit log entries
+function displayAuditLog(logs) {
+    const tbody = document.getElementById('auditTableBody');
+    tbody.innerHTML = '';
+    
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No audit log entries found</td></tr>';
+        return;
+    }
+    
+    logs.forEach(log => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                ${formatDateTime(log.changed_at)}
+                <br><small class="text-muted">${getTimeAgo(log.changed_at)}</small>
+            </td>
+            <td>
+                <span class="badge bg-secondary">${log.changed_by || 'System'}</span>
+                <br><button class="btn btn-sm btn-link p-0" onclick="viewUserActivity('${log.changed_by}')">
+                    View Activity
+                </button>
+            </td>
+            <td>
+                <span class="badge bg-info">${log.table_name}</span>
+            </td>
+            <td>
+                <span class="badge bg-${getActionColor(log.action)}">${log.action}</span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-link p-0" onclick="viewRecordHistory('${log.table_name}', ${log.record_id})">
+                    ${log.record_id}
+                </button>
+            </td>
+            <td>
+                ${getChangeSummary(log.old_values, log.new_values, log.action)}
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewChangeDetails(${log.id})">
+                    <i class="fas fa-eye"></i> Details
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Display pagination
+function displayPagination(pagination) {
+    const paginationElement = document.getElementById('pagination');
+    paginationElement.innerHTML = '';
+    
+    if (pagination.pages <= 1) return;
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${pagination.page === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadAuditLog(${pagination.page - 1})">Previous</a>`;
+    paginationElement.appendChild(prevLi);
+    
+    // Page numbers
+    for (let i = 1; i <= pagination.pages; i++) {
+        if (i === 1 || i === pagination.pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === pagination.page ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="loadAuditLog(${i})">${i}</a>`;
+            paginationElement.appendChild(li);
+        } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            li.innerHTML = '<span class="page-link">...</span>';
+            paginationElement.appendChild(li);
+        }
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${pagination.page === pagination.pages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadAuditLog(${pagination.page + 1})">Next</a>`;
+    paginationElement.appendChild(nextLi);
+}
+
+// View change details
+async function viewChangeDetails(logId) {
+    try {
+        const log = auditLogs.find(l => l.id === logId);
+        if (!log) return;
+        
+        // Display old values
+        const oldValuesElement = document.getElementById('oldValues');
+        oldValuesElement.textContent = log.old_values ? JSON.stringify(log.old_values, null, 2) : 'No previous values';
+        
+        // Display new values
+        const newValuesElement = document.getElementById('newValues');
+        newValuesElement.textContent = log.new_values ? JSON.stringify(log.new_values, null, 2) : 'No new values';
+        
+        // Display change summary
+        const summaryElement = document.getElementById('changeSummary');
+        summaryElement.innerHTML = getDetailedChangeSummary(log.old_values, log.new_values, log.action);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('changeDetailsModal')).show();
+    } catch (error) {
+        console.error('Error viewing change details:', error);
+        showAlert('Error viewing change details', 'error');
+    }
+}
+
+// View user activity
+async function viewUserActivity(username) {
+    try {
+        const response = await fetch(`/api/v1/audit-log?user=${encodeURIComponent(username)}&per_page=50`);
+        const data = await response.json();
+        
+        const container = document.getElementById('userActivityContent');
+        
+        if (data.logs.length === 0) {
+            container.innerHTML = '<p class="text-muted">No activity found for this user</p>';
+        } else {
+            let html = '<div class="timeline">';
+            data.logs.forEach(log => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="dot ${log.action.toLowerCase()}"></div>
+                        <div class="step-info">
+                            <strong>${log.action} on ${log.table_name}:${log.record_id}</strong>
+                            <small class="text-muted">${formatDateTime(log.changed_at)}</small>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        new bootstrap.Modal(document.getElementById('userActivityModal')).show();
+    } catch (error) {
+        console.error('Error loading user activity:', error);
+        showAlert('Error loading user activity', 'error');
+    }
+}
+
+// View record history
+async function viewRecordHistory(tableName, recordId) {
+    try {
+        const response = await fetch(`/api/v1/audit-log?table_name=${tableName}&record_id=${recordId}&per_page=50`);
+        const data = await response.json();
+        
+        const container = document.getElementById('recordHistoryContent');
+        
+        if (data.logs.length === 0) {
+            container.innerHTML = '<p class="text-muted">No history found for this record</p>';
+        } else {
+            let html = '<div class="timeline">';
+            data.logs.forEach(log => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="dot ${log.action.toLowerCase()}"></div>
+                        <div class="step-info">
+                            <strong>${log.action} by ${log.changed_by || 'System'}</strong>
+                            <small class="text-muted">${formatDateTime(log.changed_at)}</small>
+                            ${log.new_values ? `<br><small class="text-muted">${JSON.stringify(log.new_values)}</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        new bootstrap.Modal(document.getElementById('recordHistoryModal')).show();
+    } catch (error) {
+        console.error('Error loading record history:', error);
+        showAlert('Error loading record history', 'error');
+    }
+}
+
+// Export audit log
+function exportAuditLog() {
+    try {
+        const tableFilter = document.getElementById('tableFilter').value;
+        const actionFilter = document.getElementById('actionFilter').value;
+        const userFilter = document.getElementById('userFilter').value;
+        const dateFrom = document.getElementById('dateFromFilter').value;
+        const dateTo = document.getElementById('dateToFilter').value;
+        
+        let url = `/api/v1/audit-log/export?`;
+        if (tableFilter) url += `table_name=${tableFilter}&`;
+        if (actionFilter) url += `action=${actionFilter}&`;
+        if (userFilter) url += `user_id=${userFilter}&`;
+        if (dateFrom) url += `date_from=${dateFrom}&`;
+        if (dateTo) url += `date_to=${dateTo}&`;
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `audit_log_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert('Audit log exported successfully', 'success');
+    } catch (error) {
+        console.error('Error exporting audit log:', error);
+        showAlert('Error exporting audit log', 'error');
+    }
+}
+
+// Refresh audit log
+function refreshAuditLog() {
+    loadAuditLogStats();
+    loadAuditLog();
+}
+
+// Utility functions
+function getActionColor(action) {
+    const colors = {
+        'INSERT': 'success',
+        'UPDATE': 'warning',
+        'DELETE': 'danger'
+    };
+    return colors[action] || 'secondary';
+}
+
+function getChangeSummary(oldValues, newValues, action) {
+    if (action === 'INSERT') {
+        return `<span class="text-success">Created new record</span>`;
+    } else if (action === 'DELETE') {
+        return `<span class="text-danger">Record deleted</span>`;
+    } else if (action === 'UPDATE') {
+        const changes = getChangedFields(oldValues, newValues);
+        return `<span class="text-warning">Updated: ${changes.join(', ')}</span>`;
+    }
+    return '';
+}
+
+function getDetailedChangeSummary(oldValues, newValues, action) {
+    if (action === 'INSERT') {
+        return '<div class="alert alert-success">New record created</div>';
+    } else if (action === 'DELETE') {
+        return '<div class="alert alert-danger">Record deleted</div>';
+    } else if (action === 'UPDATE') {
+        const changes = getChangedFields(oldValues, newValues);
+        let html = '<div class="alert alert-warning"><strong>Updated fields:</strong><ul>';
+        changes.forEach(field => {
+            const oldValue = oldValues ? oldValues[field] : 'N/A';
+            const newValue = newValues ? newValues[field] : 'N/A';
+            html += `<li><strong>${field}:</strong> ${oldValue} → ${newValue}</li>`;
+        });
+        html += '</ul></div>';
+        return html;
+    }
+    return '';
+}
+
+function getChangedFields(oldValues, newValues) {
+    if (!oldValues || !newValues) return [];
+    
+    const changes = [];
+    for (const key in newValues) {
+        if (oldValues[key] !== newValues[key]) {
+            changes.push(key);
+        }
+    }
+    return changes;
+}
+
+function formatDateTime(dateString) {
+    return new Date(dateString).toLocaleString();
+}
+
+function getTimeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+}
+
+function showAlert(message, type) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at top of container
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 
