@@ -14,17 +14,28 @@ A comprehensive end-to-end air freight operation management system for WDT Suppl
 
 ## Quick Start
 
-1. Install dependencies:
+1. **Set up a virtual environment (recommended):**
+   ```bat
+   python -m venv venv
+   source venv/bin/activate
+   ```
+   > On Windows, use:
+   > ```bash
+   > python3 -m venv venv
+   > venv\Scripts\activate
+   > ```
+
+2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Run the application:
+3. **Run the application:**
    ```bash
    python app.py
    ```
 
-3. Access the system at `http://localhost:5000`
+4. **Access the system at** `http://localhost:5000`
 
 ## System Requirements
 
