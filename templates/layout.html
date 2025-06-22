@@ -1,17 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <!-- Bootstrap CSS -->
+    <meta charset="UTF-8">
+    <title>{{ _('WDT Air Cargo System') }}</title>
+    
+    <!-- Bootstrap CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-..."
       crossorigin="anonymous">
-
-    <meta charset="UTF-8">
-    <title>{{ _('WDT Air Cargo System') }}</title>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Simple Line Icons for Quantum Able style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.5.5/css/simple-line-icons.min.css">
+    
+    <!-- Custom CSS - Load after Bootstrap to override defaults -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quantum_able.css') }}">
+    
     <style>
         .flashes {
             list-style: none;
@@ -47,11 +55,13 @@
         }
     </style>
 </head>
-<body>
+<body class="sidebar-mini fixed">
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('WDT Air Cargo') }}</a>
+            <!-- Sidebar toggle button - moved to leftmost position -->
+            <a href="#!" data-toggle="offcanvas" class="sidebar-toggle"></a>
             
+            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('WDT Air Cargo') }}</a>
             
             <div class="navbar-nav ms-auto">
                 <!-- Timezone Selector -->
@@ -89,16 +99,56 @@
     </nav>
     
     <div class="d-flex">
-        <nav id="sidebar">
-            <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('Dashboard') }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('cargo.cargo_list') }}">{{ _('Cargo Management') }}</a></li>
-                {% if current_user.is_authenticated and current_user.has_permission('manage_users') %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('users.user_management') }}">{{ _('User & Role Mgmt') }}</a></li>
-                {% endif %}
-            </ul>
-        </nav>
+        {% if current_user.is_authenticated %}
+        <!-- Side-Nav-->
+        <aside class="main-sidebar hidden-print">
+            <section class="sidebar" id="sidebar-scroll">
+                <!-- Sidebar Menu-->
+                <ul class="sidebar-menu">
+                    <li class="nav-level">--- Navigation</li>
+                    <li class="treeview {% if request.endpoint == 'dashboard.dashboard_home' %}active{% endif %}">
+                        <a class="waves-effect waves-dark" href="{{ url_for('dashboard.dashboard_home') }}" data-title="Dashboard">
+                            <i class="icon-home"></i><span>{{ _('Dashboard') }}</span>
+                        </a>                
+                    </li>
+                    <li class="nav-level">--- Management</li>
+                    <li class="treeview {% if 'cargo' in request.endpoint %}active{% endif %}">
+                        <a class="waves-effect waves-dark" href="{{ url_for('cargo.cargo_list') }}" data-title="Cargo Management">
+                            <i class="icon-briefcase"></i><span>{{ _('Cargo Management') }}</span>
+                        </a>                
+                    </li>
+                    <li class="treeview {% if 'bills' in request.endpoint %}active{% endif %}">
+                        <a class="waves-effect waves-dark" href="{{ url_for('bills.bills_list') }}" data-title="Bills">
+                            <i class="icon-list"></i><span>{{ _('Bills') }}</span>
+                        </a>                
+                    </li>
+                    <li class="treeview {% if 'attachments' in request.endpoint %}active{% endif %}">
+                        <a class="waves-effect waves-dark" href="{{ url_for('attachments.attachments_list') }}" data-title="Attachments">
+                            <i class="icon-docs"></i><span>{{ _('Attachments') }}</span>
+                        </a>                
+                    </li>
+                    {% if current_user.has_permission('send_emails') %}
+                    <li class="treeview {% if 'email_center' in request.endpoint %}active{% endif %}">
+                        <a class="waves-effect waves-dark" href="{{ url_for('email_center.email_center') }}" data-title="Email Center">
+                            <i class="icon-envelope"></i><span>{{ _('Email Center') }}</span>
+                        </a>                
+                    </li>
+                    {% endif %}
+                    {% if current_user.has_permission('manage_users') %}
+                    <li class="nav-level">--- Administration</li>
+                    <li class="treeview {% if 'users' in request.endpoint %}active{% endif %}">
+                        <a class="waves-effect waves-dark" href="{{ url_for('users.user_management') }}" data-title="User & Role Mgmt">
+                            <i class="icon-people"></i><span>{{ _('User & Role Mgmt') }}</span>
+                        </a>                
+                    </li>
+                    {% endif %}
+                </ul>
+            </section>
+        </aside>
         <div id="content-wrapper" class="flex-grow-1">
+        {% else %}
+        <div id="content-wrapper" class="flex-grow-1" style="margin-left: 0;">
+        {% endif %}
             <div class="container">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -120,13 +170,50 @@
     <!-- Bootstrap Bundle (includes Popper) -->
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-..."
       crossorigin="anonymous"
     ></script>
     
+    {% block scripts %}{% endblock %}
+    
     <script>
-    // Detect user's timezone on page load
+    // Sidebar toggle functionality and timezone detection
     document.addEventListener('DOMContentLoaded', function() {
+        // Sidebar toggle functionality
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+        const body = document.body;
+        
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                body.classList.toggle('sidebar-collapse');
+                
+                // Debug: Log the state
+                console.log('Sidebar collapsed:', body.classList.contains('sidebar-collapse'));
+                
+                // Store the state in localStorage
+                if (body.classList.contains('sidebar-collapse')) {
+                    localStorage.setItem('sidebar-collapsed', 'true');
+                } else {
+                    localStorage.setItem('sidebar-collapsed', 'false');
+                }
+            });
+        }
+        
+        // Restore sidebar state on page load
+        const sidebarCollapsed = localStorage.getItem('sidebar-collapsed');
+        if (sidebarCollapsed === 'true') {
+            body.classList.add('sidebar-collapse');
+            console.log('Sidebar restored to collapsed state');
+        }
+        
+        // Debug: Check if tooltip elements exist
+        const sidebarLinks = document.querySelectorAll('.sidebar-menu > li > a');
+        console.log('Found sidebar links:', sidebarLinks.length);
+        sidebarLinks.forEach((link, index) => {
+            console.log(`Link ${index}:`, link.getAttribute('data-title'));
+        });
+        
+        // Detect user's timezone on page load
         detectAndSetTimezone();
     });
     
@@ -192,12 +279,13 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Reload the page to apply the new timezone
-                window.location.reload();
+                console.log('Timezone updated to:', timezone);
+            } else {
+                console.error('Failed to update timezone');
             }
         })
         .catch(error => {
-            console.error('Error setting timezone:', error);
+            console.error('Error updating timezone:', error);
         });
     }
     </script>

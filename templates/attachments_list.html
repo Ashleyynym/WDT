@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">{{ _('Attachments Management') }}</h2>
+                </div>
+                <div class="card-body">
+                    {% if attachments %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('Cargo AWB') }}</th>
+                                        <th>{{ _('File Name') }}</th>
+                                        <th>{{ _('Type') }}</th>
+                                        <th>{{ _('Size') }}</th>
+                                        <th>{{ _('Uploaded') }}</th>
+                                        <th>{{ _('Uploader') }}</th>
+                                        <th>{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attachment in attachments %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('cargo.cargo_detail', cargo_id=attachment.cargo.id) }}">
+                                                {{ attachment.cargo.main_awb }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-file me-2"></i>
+                                            {{ attachment.original_filename }}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ attachment.file_type or 'Unknown' }}</span>
+                                        </td>
+                                        <td>{{ attachment.get_file_size_mb() }} MB</td>
+                                        <td>
+                                            {% if attachment.local_time %}
+                                                {{ format_datetime_with_timezone(attachment.local_time) }}
+                                            {% else %}
+                                                {{ format_datetime_with_timezone(attachment.uploaded_at) }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ attachment.uploader.username if attachment.uploader else 'Unknown' }}</td>
+                                        <td>
+                                            <a href="{{ url_for('attachments.list_attachments', cargo_id=attachment.cargo.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> {{ _('View') }}
+                                            </a>
+                                            {% if attachment.uploader_id == current_user.id or current_user.has_permission('manage_users') %}
+                                            <a href="{{ url_for('static', filename='uploads/' + attachment.filename) }}" 
+                                               class="btn btn-sm btn-outline-success" target="_blank">
+                                                <i class="fas fa-download"></i> {{ _('Download') }}
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-paperclip fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{{ _('No attachments found') }}</h4>
+                            <p class="text-muted">{{ _('Attachments will appear here once they are uploaded to cargo records.') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

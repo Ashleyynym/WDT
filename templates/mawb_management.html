@@ -1,0 +1,906 @@
+{% extends "layout.html" %}
+
+{% block title %}MAWB Management - Container Tracking Platform{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">MAWB Management</h1>
+            <p class="text-muted">Manage Master Air Waybills and track container progress</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createMawbModal">
+                <i class="fas fa-plus"></i> Create MAWB
+            </button>
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fas fa-upload"></i> Import Files
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="searchInput" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="MAWB, Consignee, Shipper...">
+                </div>
+                <div class="col-md-2">
+                    <label for="statusFilter" class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="complete">Complete</option>
+                        <option value="delayed">Delayed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="carrierFilter" class="form-label">Carrier</label>
+                    <select class="form-select" id="carrierFilter">
+                        <option value="">All Carriers</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="dateFilter" class="form-label">Date Range</label>
+                    <select class="form-select" id="dateFilter">
+                        <option value="">All Dates</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-secondary me-2" id="clearFilters">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                    <button class="btn btn-primary" id="applyFilters">
+                        <i class="fas fa-search"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalMawbs">0</h4>
+                            <p class="card-text">Total MAWBs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-plane fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="activeMawbs">0</h4>
+                            <p class="card-text">Active MAWBs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="overdueMawbs">0</h4>
+                            <p class="card-text">Overdue MAWBs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="completedMawbs">0</h4>
+                            <p class="card-text">Completed MAWBs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAWB Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">MAWB List</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="mawbTable">
+                    <thead>
+                        <tr>
+                            <th>MAWB Number</th>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>Carrier</th>
+                            <th>ETA</th>
+                            <th>LFD</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mawbTableBody">
+                        <!-- MAWB rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="MAWB pagination">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- Pagination will be populated here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Create MAWB Modal -->
+<div class="modal fade" id="createMawbModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New MAWB</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createMawbForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mawbNumber" class="form-label">MAWB Number *</label>
+                                <input type="text" class="form-control" id="mawbNumber" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="carrierId" class="form-label">Carrier</label>
+                                <select class="form-select" id="carrierId">
+                                    <option value="">Select Carrier</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="originPort" class="form-label">Origin Port</label>
+                                <input type="text" class="form-control" id="originPort">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="destPort" class="form-label">Destination Port</label>
+                                <input type="text" class="form-control" id="destPort">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="etd" class="form-label">ETD</label>
+                                <input type="date" class="form-control" id="etd">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="eta" class="form-label">ETA</label>
+                                <input type="date" class="form-control" id="eta">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="lfd" class="form-label">LFD</label>
+                                <input type="date" class="form-control" id="lfd">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="shipper" class="form-label">Shipper</label>
+                                <input type="text" class="form-control" id="shipper">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="consignee" class="form-label">Consignee</label>
+                                <input type="text" class="form-control" id="consignee">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="pieces" class="form-label">Pieces</label>
+                                <input type="number" class="form-control" id="pieces">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="weight" class="form-label">Weight (kg)</label>
+                                <input type="number" step="0.01" class="form-control" id="weight">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="volume" class="form-label">Volume (m³)</label>
+                                <input type="number" step="0.01" class="form-control" id="volume">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveMawbBtn">Create MAWB</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAWB Details Modal -->
+<div class="modal fade" id="mawbDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">MAWB Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- MAWB Information -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">MAWB Information</h6>
+                            </div>
+                            <div class="card-body" id="mawbInfo">
+                                <!-- MAWB details will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Workflow Status -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Workflow Status</h6>
+                            </div>
+                            <div class="card-body" id="workflowStatus">
+                                <!-- Workflow timeline will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <!-- Recent Events -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Recent Events</h6>
+                            </div>
+                            <div class="card-body" id="recentEvents">
+                                <!-- Recent events will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- HAWB List -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">HAWB List</h6>
+                                <button class="btn btn-sm btn-primary" id="addHawbBtn">
+                                    <i class="fas fa-plus"></i> Add HAWB
+                                </button>
+                            </div>
+                            <div class="card-body" id="hawbList">
+                                <!-- HAWB list will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editMawbBtn">Edit MAWB</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Files Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Files</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="drop-zone" id="dropZone">
+                    <div class="icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="text">Drag and drop files here</div>
+                    <div class="subtext">or click to browse</div>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                </div>
+                <div id="uploadProgress" style="display: none;">
+                    <div class="progress mt-3">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <p class="text-center mt-2" id="uploadStatus">Uploading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="uploadBtn" disabled>Upload Files</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let currentPage = 1;
+let totalPages = 1;
+let selectedMawbId = null;
+let carriers = [];
+let fileTypes = [];
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+    loadCarriers();
+    loadFileTypes();
+    loadMawbs();
+    setupEventListeners();
+});
+
+// Setup event listeners
+function setupEventListeners() {
+    // Search and filters
+    document.getElementById('searchInput').addEventListener('input', debounce(loadMawbs, 300));
+    document.getElementById('statusFilter').addEventListener('change', loadMawbs);
+    document.getElementById('carrierFilter').addEventListener('change', loadMawbs);
+    document.getElementById('dateFilter').addEventListener('change', loadMawbs);
+    document.getElementById('clearFilters').addEventListener('click', clearFilters);
+    document.getElementById('applyFilters').addEventListener('click', loadMawbs);
+    
+    // Create MAWB
+    document.getElementById('saveMawbBtn').addEventListener('click', createMawb);
+    
+    // File upload
+    document.getElementById('dropZone').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+    document.getElementById('uploadBtn').addEventListener('click', uploadFiles);
+    
+    // Drag and drop
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', handleDragOver);
+    dropZone.addEventListener('drop', handleDrop);
+}
+
+// Load dashboard statistics
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/v1/dashboard/stats');
+        const data = await response.json();
+        
+        document.getElementById('totalMawbs').textContent = data.stats.total_mawbs;
+        document.getElementById('activeMawbs').textContent = data.stats.active_mawbs;
+        document.getElementById('overdueMawbs').textContent = data.stats.overdue_mawbs;
+        document.getElementById('completedMawbs').textContent = data.stats.completed_mawbs;
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+    }
+}
+
+// Load carriers
+async function loadCarriers() {
+    try {
+        const response = await fetch('/api/v1/carriers');
+        const data = await response.json();
+        carriers = data.carriers;
+        
+        const carrierFilter = document.getElementById('carrierFilter');
+        const carrierSelect = document.getElementById('carrierId');
+        
+        carriers.forEach(carrier => {
+            carrierFilter.innerHTML += `<option value="${carrier.id}">${carrier.name}</option>`;
+            carrierSelect.innerHTML += `<option value="${carrier.id}">${carrier.name}</option>`;
+        });
+    } catch (error) {
+        console.error('Error loading carriers:', error);
+    }
+}
+
+// Load file types
+async function loadFileTypes() {
+    try {
+        const response = await fetch('/api/v1/file-types');
+        const data = await response.json();
+        fileTypes = data.file_types;
+    } catch (error) {
+        console.error('Error loading file types:', error);
+    }
+}
+
+// Load MAWBs with filters
+async function loadMawbs(page = 1) {
+    try {
+        const search = document.getElementById('searchInput').value;
+        const status = document.getElementById('statusFilter').value;
+        const carrierId = document.getElementById('carrierFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
+        
+        let url = `/api/v1/mawbs?page=${page}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (status) url += `&status=${status}`;
+        if (carrierId) url += `&carrier_id=${carrierId}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        displayMawbs(data.mawbs);
+        displayPagination(data.pagination);
+        
+        currentPage = data.pagination.page;
+        totalPages = data.pagination.pages;
+    } catch (error) {
+        console.error('Error loading MAWBs:', error);
+        showAlert('Error loading MAWBs', 'error');
+    }
+}
+
+// Display MAWBs in table
+function displayMawbs(mawbs) {
+    const tbody = document.getElementById('mawbTableBody');
+    tbody.innerHTML = '';
+    
+    if (mawbs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">No MAWBs found</td></tr>';
+        return;
+    }
+    
+    mawbs.forEach(mawb => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <strong>${mawb.mawb_number}</strong>
+                ${mawb.is_overdue ? '<span class="badge bg-danger ms-2">Overdue</span>' : ''}
+            </td>
+            <td>${mawb.origin_port || '-'}</td>
+            <td>${mawb.dest_port || '-'}</td>
+            <td>${mawb.carrier || '-'}</td>
+            <td>${mawb.eta ? formatDate(mawb.eta) : '-'}</td>
+            <td>
+                ${mawb.lfd ? formatDate(mawb.lfd) : '-'}
+                ${mawb.time_until_lfd !== null ? `<br><small class="text-muted">${mawb.time_until_lfd} days left</small>` : ''}
+            </td>
+            <td>
+                <span class="badge bg-${getStatusColor(mawb.status)}">${mawb.status}</span>
+            </td>
+            <td>
+                <span class="badge bg-${getProgressColor(mawb.progress)}">${mawb.progress}</span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewMawbDetails(${mawb.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="editMawb(${mawb.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="viewTimeline(${mawb.id})">
+                    <i class="fas fa-timeline"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Display pagination
+function displayPagination(pagination) {
+    const paginationElement = document.getElementById('pagination');
+    paginationElement.innerHTML = '';
+    
+    if (pagination.pages <= 1) return;
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${pagination.page === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="loadMawbs(${pagination.page - 1})">Previous</a>`;
+    paginationElement.appendChild(prevLi);
+    
+    // Page numbers
+    for (let i = 1; i <= pagination.pages; i++) {
+        if (i === 1 || i === pagination.pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+            const li = document.createElement('li');
+            li.className = `page-item ${i === pagination.page ? 'active' : ''}`;
+            li.innerHTML = `<a class="page-link" href="#" onclick="loadMawbs(${i})">${i}</a>`;
+            paginationElement.appendChild(li);
+        } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            li.innerHTML = '<span class="page-link">...</span>';
+            paginationElement.appendChild(li);
+        }
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${pagination.page === pagination.pages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="loadMawbs(${pagination.page + 1})">Next</a>`;
+    paginationElement.appendChild(nextLi);
+}
+
+// Create new MAWB
+async function createMawb() {
+    const formData = {
+        mawb_number: document.getElementById('mawbNumber').value,
+        carrier_id: document.getElementById('carrierId').value || null,
+        origin_port: document.getElementById('originPort').value,
+        dest_port: document.getElementById('destPort').value,
+        etd: document.getElementById('etd').value,
+        eta: document.getElementById('eta').value,
+        lfd: document.getElementById('lfd').value,
+        shipper: document.getElementById('shipper').value,
+        consignee: document.getElementById('consignee').value,
+        pieces: document.getElementById('pieces').value || null,
+        weight: document.getElementById('weight').value || null,
+        volume: document.getElementById('volume').value || null,
+        description: document.getElementById('description').value,
+        notes: document.getElementById('notes').value
+    };
+    
+    try {
+        const response = await fetch('/api/v1/mawbs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('MAWB created successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('createMawbModal')).hide();
+            document.getElementById('createMawbForm').reset();
+            loadMawbs();
+            loadDashboardStats();
+        } else {
+            showAlert(data.error || 'Error creating MAWB', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating MAWB:', error);
+        showAlert('Error creating MAWB', 'error');
+    }
+}
+
+// View MAWB details
+async function viewMawbDetails(mawbId) {
+    try {
+        const response = await fetch(`/api/v1/mawbs/${mawbId}`);
+        const mawb = await response.json();
+        
+        selectedMawbId = mawbId;
+        
+        // Populate MAWB info
+        document.getElementById('mawbInfo').innerHTML = `
+            <dl class="row">
+                <dt class="col-sm-4">MAWB Number</dt>
+                <dd class="col-sm-8">${mawb.mawb_number}</dd>
+                
+                <dt class="col-sm-4">Origin</dt>
+                <dd class="col-sm-8">${mawb.origin_port || '-'}</dd>
+                
+                <dt class="col-sm-4">Destination</dt>
+                <dd class="col-sm-8">${mawb.dest_port || '-'}</dd>
+                
+                <dt class="col-sm-4">Carrier</dt>
+                <dd class="col-sm-8">${mawb.carrier ? mawb.carrier.name : '-'}</dd>
+                
+                <dt class="col-sm-4">ETA</dt>
+                <dd class="col-sm-8">${mawb.eta ? formatDate(mawb.eta) : '-'}</dd>
+                
+                <dt class="col-sm-4">LFD</dt>
+                <dd class="col-sm-8">${mawb.lfd ? formatDate(mawb.lfd) : '-'}</dd>
+                
+                <dt class="col-sm-4">Status</dt>
+                <dd class="col-sm-8">
+                    <span class="badge bg-${getStatusColor(mawb.status)}">${mawb.status}</span>
+                </dd>
+                
+                <dt class="col-sm-4">Progress</dt>
+                <dd class="col-sm-8">
+                    <span class="badge bg-${getProgressColor(mawb.progress)}">${mawb.progress}</span>
+                </dd>
+            </dl>
+        `;
+        
+        // Load workflow status
+        loadWorkflowStatus(mawbId);
+        
+        // Load recent events
+        displayRecentEvents(mawb.recent_events);
+        
+        // Load HAWB list
+        displayHawbList(mawb.hawbs);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('mawbDetailsModal')).show();
+    } catch (error) {
+        console.error('Error loading MAWB details:', error);
+        showAlert('Error loading MAWB details', 'error');
+    }
+}
+
+// Load workflow status
+async function loadWorkflowStatus(mawbId) {
+    try {
+        const response = await fetch(`/api/v1/workflows/mawb/${mawbId}`);
+        const data = await response.json();
+        
+        if (data.success === false) {
+            document.getElementById('workflowStatus').innerHTML = '<p class="text-muted">No workflow found</p>';
+            return;
+        }
+        
+        const workflow = data.workflow;
+        const steps = data.steps;
+        
+        let timelineHtml = '<div class="timeline">';
+        steps.forEach((step, index) => {
+            const isCompleted = step.is_completed;
+            const isCurrent = step.is_current;
+            
+            timelineHtml += `
+                <div class="timeline-item ${isCompleted ? 'completed' : isCurrent ? 'current' : ''}">
+                    <div class="dot ${isCompleted ? 'completed' : isCurrent ? 'current' : 'upcoming'}" 
+                         data-tooltip="${step.name}"></div>
+                    <div class="step-info">
+                        <strong>${step.name}</strong>
+                        <small class="text-muted">${step.description || ''}</small>
+                    </div>
+                </div>
+            `;
+        });
+        timelineHtml += '</div>';
+        
+        document.getElementById('workflowStatus').innerHTML = timelineHtml;
+    } catch (error) {
+        console.error('Error loading workflow status:', error);
+        document.getElementById('workflowStatus').innerHTML = '<p class="text-danger">Error loading workflow</p>';
+    }
+}
+
+// Display recent events
+function displayRecentEvents(events) {
+    const container = document.getElementById('recentEvents');
+    
+    if (events.length === 0) {
+        container.innerHTML = '<p class="text-muted">No recent events</p>';
+        return;
+    }
+    
+    let html = '';
+    events.forEach(event => {
+        html += `
+            <div class="event-item mb-2">
+                <div class="d-flex justify-content-between">
+                    <strong>${event.event_type}</strong>
+                    <small class="text-muted">${formatDateTime(event.event_time)}</small>
+                </div>
+                <small class="text-muted">by ${event.created_by || 'System'}</small>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Display HAWB list
+function displayHawbList(hawbs) {
+    const container = document.getElementById('hawbList');
+    
+    if (hawbs.length === 0) {
+        container.innerHTML = '<p class="text-muted">No HAWBs found</p>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-sm">';
+    html += '<thead><tr><th>HAWB</th><th>Consignee</th><th>Status</th></tr></thead><tbody>';
+    
+    hawbs.forEach(hawb => {
+        html += `
+            <tr>
+                <td>${hawb.hawb_number}</td>
+                <td>${hawb.consignee || '-'}</td>
+                <td><span class="badge bg-${getStatusColor(hawb.status)}">${hawb.status}</span></td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+// File upload functions
+function handleFileSelect(event) {
+    const files = event.target.files;
+    handleFiles(files);
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('dragover');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('dragover');
+    const files = event.dataTransfer.files;
+    handleFiles(files);
+}
+
+function handleFiles(files) {
+    if (files.length > 0) {
+        document.getElementById('uploadBtn').disabled = false;
+        // Store files for upload
+        window.selectedFiles = files;
+    }
+}
+
+async function uploadFiles() {
+    const files = window.selectedFiles;
+    if (!files || files.length === 0) return;
+    
+    const formData = new FormData();
+    for (let file of files) {
+        formData.append('files', file);
+    }
+    
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('uploadBtn').disabled = true;
+    
+    try {
+        const response = await fetch('/api/v1/attachments/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('Files uploaded successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+        } else {
+            showAlert(data.error || 'Error uploading files', 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading files:', error);
+        showAlert('Error uploading files', 'error');
+    } finally {
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('uploadBtn').disabled = false;
+        window.selectedFiles = null;
+    }
+}
+
+// Utility functions
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('carrierFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    loadMawbs();
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'in_progress': 'primary',
+        'complete': 'success',
+        'delayed': 'danger',
+        'cancelled': 'secondary'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getProgressColor(progress) {
+    const colors = {
+        'not_shipped': 'secondary',
+        'in_transit': 'info',
+        'at_destination': 'warning',
+        'delivered': 'success'
+    };
+    return colors[progress] || 'secondary';
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+function formatDateTime(dateString) {
+    return new Date(dateString).toLocaleString();
+}
+
+function showAlert(message, type) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at top of container
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+</script>
+{% endblock %} 

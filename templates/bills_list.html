@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">{{ _('Bills Management') }}</h2>
+                </div>
+                <div class="card-body">
+                    {% if bills %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('Cargo AWB') }}</th>
+                                        <th>{{ _('Supplier') }}</th>
+                                        <th>{{ _('Category') }}</th>
+                                        <th>{{ _('Amount') }}</th>
+                                        <th>{{ _('Status') }}</th>
+                                        <th>{{ _('Due Date') }}</th>
+                                        <th>{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for bill in bills %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('cargo.cargo_detail', cargo_id=bill.cargo.id) }}">
+                                                {{ bill.cargo.main_awb }}
+                                            </a>
+                                        </td>
+                                        <td>{{ bill.supplier_name }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ bill.category }}</span>
+                                        </td>
+                                        <td>{{ bill.currency }} {{ "%.2f"|format(bill.amount) }}</td>
+                                        <td>
+                                            {% if bill.payment_status == 'Paid' %}
+                                                <span class="badge bg-success">{{ _('Paid') }}</span>
+                                            {% elif bill.payment_status == 'Pending' %}
+                                                <span class="badge bg-warning">{{ _('Pending') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">{{ _('Unpaid') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if bill.due_date %}
+                                                {{ format_date_with_timezone(bill.due_date) }}
+                                            {% else %}
+                                                <span class="text-muted">{{ _('Not set') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('bills.list_bills', cargo_id=bill.cargo.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> {{ _('View') }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{{ _('No bills found') }}</h4>
+                            <p class="text-muted">{{ _('Bills will appear here once they are added to cargo records.') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

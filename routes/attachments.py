@@ -10,6 +10,35 @@ import pytz
 bp = Blueprint('attachments', __name__, url_prefix='/attachments')
 UPLOAD_FOLDER = 'uploads/'
 
+@bp.route('/')
+@login_required
+def attachments_list():
+    """General attachments list - show all attachments for the current user"""
+    timezone = session.get('timezone', 'America/Los_Angeles')
+    file_types = Attachment.get_file_types()
+    
+    # Get all attachments, optionally filtered by user permissions
+    if current_user.has_permission('manage_users'):
+        # Admin can see all attachments
+        attachments = Attachment.query.all()
+    else:
+        # Regular users see attachments for cargos they're responsible for
+        attachments = Attachment.query.join(Cargo).filter(
+            Cargo.responsibles.any(id=current_user.id)
+        ).all()
+    
+    # Convert times to selected timezone
+    tz = pytz.timezone(timezone)
+    for attachment in attachments:
+        if attachment.uploaded_at:
+            # Convert UTC to selected timezone
+            utc_time = pytz.utc.localize(attachment.uploaded_at)
+            attachment.local_time = utc_time.astimezone(tz)
+    
+    return render_template('attachments_list.html', 
+                         attachments=attachments, 
+                         file_types=file_types)
+
 @bp.route('/<int:cargo_id>')
 @login_required
 def list_attachments(cargo_id):

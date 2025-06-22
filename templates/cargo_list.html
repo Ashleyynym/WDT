@@ -108,6 +108,10 @@
                                 {% endif %}
                             </td>
                             <td>
+                                <div class="process-timeline" data-status="{{ cargo.status }}" style="min-width:120px; min-height:32px; border:1px dashed #007BFF; background:#F8F9FA; border-radius:6px; padding:2px 4px;">
+                                    <div class="timeline-debug" style="font-size:10px; color:#666;">Loading timeline...</div>
+                                    <div id="test-{{ cargo.id }}" style="font-size:10px; color:red;">Test {{ cargo.id }}</div>
+                                </div>
                                 <span class="badge {% if cargo.status == 'In Progress' %}bg-warning{% elif cargo.status == 'Completed' %}bg-success{% else %}bg-secondary{% endif %}">
                                     {{ cargo.status or '—' }}
                                 </span>
@@ -195,4 +199,104 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Make functions globally accessible
+window.testTimeline = function() {
+    alert('Test function called!');
+    console.log('Test function called!');
+    renderTimeline();
+};
+
+// Simple timeline widget with better error handling
+console.log('Timeline script starting...');
+
+function renderTimeline() {
+    console.log('Rendering timelines...');
+    
+    const timelines = document.querySelectorAll('.process-timeline');
+    console.log('Found', timelines.length, 'timeline containers');
+    
+    if (timelines.length === 0) {
+        console.log('No timeline containers found');
+        return;
+    }
+    
+    timelines.forEach(function(container, index) {
+        try {
+            const status = container.getAttribute('data-status') || 'Not Shipped';
+            console.log('Timeline', index, 'status:', status);
+            
+            // Define stages
+            const stages = [
+                'Not Shipped',
+                'Shipped', 
+                'Arrived',
+                'Customs Inspection',
+                'Ready for Pickup',
+                'Delivered'
+            ];
+            
+            // Map status to current stage
+            let currentStage = 0;
+            if (status === 'In Progress') currentStage = 1;
+            else if (status === 'Completed') currentStage = 5;
+            else if (status === 'Delivered') currentStage = 5;
+            
+            console.log('Timeline', index, 'current stage:', currentStage);
+            
+            // Create timeline HTML
+            let html = '<div style="display:flex; align-items:center; gap:2px; width:100%; height:20px;">';
+            
+            stages.forEach((stage, i) => {
+                let dotColor = '#ADB5BD'; // gray
+                if (i < currentStage) dotColor = '#28A745'; // green
+                else if (i === currentStage) dotColor = '#007BFF'; // blue
+                
+                html += `
+                    <div style="display:flex; flex-direction:column; align-items:center; flex:1; min-width:0;">
+                        <div style="width:8px; height:8px; border-radius:50%; background:${dotColor}; margin-bottom:1px;" title="${stage}"></div>
+                        <div style="font-size:7px; color:#666; text-align:center; white-space:nowrap; overflow:hidden;">${stage.split(' ')[0]}</div>
+                    </div>
+                `;
+                
+                // Add connector (except for last stage)
+                if (i < stages.length - 1) {
+                    const connectorColor = i < currentStage ? '#28A745' : '#ADB5BD';
+                    html += `<div style="height:1px; width:4px; background:${connectorColor}; margin:0 1px;"></div>`;
+                }
+            });
+            
+            html += '</div>';
+            
+            // Replace debug text with timeline
+            container.innerHTML = html;
+            console.log('Timeline', index, 'rendered successfully');
+            
+        } catch (error) {
+            console.error('Error rendering timeline', index, ':', error);
+            container.innerHTML = '<span style="color:red; font-size:10px;">Timeline Error</span>';
+        }
+    });
+}
+
+// Try to render immediately
+renderTimeline();
+
+// Also try when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderTimeline);
+} else {
+    // DOM is already ready
+    renderTimeline();
+}
+
+// Also try after a short delay to ensure everything is loaded
+setTimeout(renderTimeline, 100);
+
+console.log('Timeline script loaded successfully');
+</script>
 {% endblock %}

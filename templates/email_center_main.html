@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ _('Email Center') }}</h1>
+        </div>
+    </div>
+
+    <!-- Email Templates Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary">
+                    <h3 class="mb-0">{{ _('Email Templates') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for template in email_templates %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ template.name }}</h5>
+                                    <p class="card-text">{{ template.subject }}</p>
+                                    <a href="#" class="btn btn-outline-primary btn-sm">{{ _('Edit') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-12 text-muted">{{ _('No email templates found.') }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Logs Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info">
+                    <h3 class="mb-0">{{ _('Recent Email Logs') }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Date Sent') }}</th>
+                                    <th>{{ _('To') }}</th>
+                                    <th>{{ _('Subject') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in email_logs %}
+                                <tr>
+                                    <td>{{ log.sent_at.strftime('%Y-%m-%d %H:%M') if log.sent_at else '' }}</td>
+                                    <td>{{ log.recipient }}</td>
+                                    <td>{{ log.subject }}</td>
+                                    <td>
+                                        {% if log.status == 'sent' %}
+                                            <span class="badge bg-success">{{ _('Sent') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ _('Failed') }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-muted">{{ _('No email logs found.') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

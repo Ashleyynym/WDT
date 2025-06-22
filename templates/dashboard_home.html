@@ -1,0 +1,346 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">{{ _('Container Tracking Dashboard') }}</h1>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted">{{ _('Total Containers') }}</h6>
+                        <h3 class="mb-0">1,247</h3>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-box fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted">{{ _('In Transit') }}</h6>
+                        <h3 class="mb-0">892</h3>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-ship fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted">{{ _('Delivered') }}</h6>
+                        <h3 class="mb-0">355</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title text-muted">{{ _('Delayed') }}</h6>
+                        <h3 class="mb-0">23</h3>
+                    </div>
+                    <div class="text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" onclick="window.fileImportModal.show()">
+                <i class="fas fa-upload me-2"></i>{{ _('Import Data') }}
+            </button>
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-download me-2"></i>{{ _('Export Report') }}
+            </button>
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-filter me-2"></i>{{ _('Filter') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Containers with Timeline -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ _('Recent Container Activity') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>{{ _('Container ID') }}</th>
+                                <th>{{ _('Origin') }}</th>
+                                <th>{{ _('Destination') }}</th>
+                                <th>{{ _('Status') }}</th>
+                                <th>{{ _('Progress') }}</th>
+                                <th>{{ _('Timeline') }}</th>
+                                <th>{{ _('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>MAWB-2024-001</strong>
+                                    <br><small class="text-muted">Created: 2024-01-15</small>
+                                </td>
+                                <td>Shanghai, China</td>
+                                <td>Los Angeles, USA</td>
+                                <td>
+                                    <span class="badge bg-success">{{ _('In Transit') }}</span>
+                                </td>
+                                <td style="width: 200px;">
+                                    <div data-progress='{"value": 75, "max": 100, "showLabel": true}'></div>
+                                </td>
+                                <td style="width: 300px;">
+                                    <div data-timeline='[
+                                        {"status": "completed", "tooltip": "Container loaded at Shanghai port"},
+                                        {"status": "completed", "tooltip": "Vessel departed Shanghai"},
+                                        {"status": "completed", "tooltip": "Crossing Pacific Ocean"},
+                                        {"status": "upcoming", "tooltip": "Arrival at Los Angeles port"},
+                                        {"status": "upcoming", "tooltip": "Customs clearance"},
+                                        {"status": "upcoming", "tooltip": "Final delivery"}
+                                    ]'></div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>MAWB-2024-002</strong>
+                                    <br><small class="text-muted">Created: 2024-01-14</small>
+                                </td>
+                                <td>Rotterdam, Netherlands</td>
+                                <td>New York, USA</td>
+                                <td>
+                                    <span class="badge bg-warning">{{ _('Delayed') }}</span>
+                                </td>
+                                <td style="width: 200px;">
+                                    <div data-progress='{"value": 45, "max": 100, "showLabel": true}'></div>
+                                </td>
+                                <td style="width: 300px;">
+                                    <div data-timeline='[
+                                        {"status": "completed", "tooltip": "Container loaded at Rotterdam"},
+                                        {"status": "completed", "tooltip": "Vessel departed Rotterdam"},
+                                        {"status": "delayed", "tooltip": "Weather delay in Atlantic"},
+                                        {"status": "upcoming", "tooltip": "Resume journey"},
+                                        {"status": "upcoming", "tooltip": "Arrival at New York"},
+                                        {"status": "upcoming", "tooltip": "Final delivery"}
+                                    ]'></div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>MAWB-2024-003</strong>
+                                    <br><small class="text-muted">Created: 2024-01-13</small>
+                                </td>
+                                <td>Tokyo, Japan</td>
+                                <td>Vancouver, Canada</td>
+                                <td>
+                                    <span class="badge bg-success">{{ _('Delivered') }}</span>
+                                </td>
+                                <td style="width: 200px;">
+                                    <div data-progress='{"value": 100, "max": 100, "showLabel": true}'></div>
+                                </td>
+                                <td style="width: 300px;">
+                                    <div data-timeline='[
+                                        {"status": "completed", "tooltip": "Container loaded at Tokyo"},
+                                        {"status": "completed", "tooltip": "Vessel departed Tokyo"},
+                                        {"status": "completed", "tooltip": "Crossing Pacific Ocean"},
+                                        {"status": "completed", "tooltip": "Arrival at Vancouver"},
+                                        {"status": "completed", "tooltip": "Customs clearance"},
+                                        {"status": "completed", "tooltip": "Final delivery"}
+                                    ]'></div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ _('Monthly Shipment Volume') }}</h5>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--color-light); border-radius: var(--radius-md);">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">{{ _('Chart placeholder - Integration with Chart.js or similar library') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ _('Status Distribution') }}</h5>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px; display: flex; align-items: center; justify-content: center; background: var(--color-light); border-radius: var(--radius-md);">
+                    <div class="text-center">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">{{ _('Chart placeholder - Integration with Chart.js or similar library') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ _('Quick Actions') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('cargo.cargo_list') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                            <i class="fas fa-box fa-2x mb-2"></i>
+                            <span>{{ _('Manage Cargo') }}</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('bills.bills_list') }}" class="btn btn-outline-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                            <i class="fas fa-file-invoice-dollar fa-2x mb-2"></i>
+                            <span>{{ _('View Bills') }}</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('attachments.attachments_list') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4">
+                            <i class="fas fa-paperclip fa-2x mb-2"></i>
+                            <span>{{ _('Attachments') }}</span>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" onclick="window.fileImportModal.show()">
+                            <i class="fas fa-upload fa-2x mb-2"></i>
+                            <span>{{ _('Import Data') }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sample journey data for demonstration
+const sampleJourneyData = {
+    title: "MAWB-2024-001 Journey",
+    description: "Container shipment from Shanghai to Los Angeles",
+    timeline: [
+        {
+            title: "Container Loaded",
+            description: "Container loaded at Shanghai port",
+            timestamp: "2024-01-15 10:30 AM",
+            status: "completed"
+        },
+        {
+            title: "Vessel Departed",
+            description: "Vessel departed Shanghai port",
+            timestamp: "2024-01-15 2:15 PM",
+            status: "completed"
+        },
+        {
+            title: "In Transit",
+            description: "Crossing Pacific Ocean",
+            timestamp: "2024-01-16 - 2024-01-25",
+            status: "completed"
+        },
+        {
+            title: "Port Arrival",
+            description: "Expected arrival at Los Angeles port",
+            timestamp: "2024-01-26 8:00 AM",
+            status: "upcoming"
+        },
+        {
+            title: "Customs Clearance",
+            description: "Customs inspection and clearance",
+            timestamp: "2024-01-27 9:00 AM",
+            status: "upcoming"
+        },
+        {
+            title: "Final Delivery",
+            description: "Delivery to final destination",
+            timestamp: "2024-01-28 10:00 AM",
+            status: "upcoming"
+        }
+    ]
+};
+
+// Add click handlers for timeline dots
+document.addEventListener('DOMContentLoaded', function() {
+    const timelineDots = document.querySelectorAll('.timeline .dot');
+    timelineDots.forEach(dot => {
+        dot.addEventListener('click', function() {
+            const drawer = new JourneyDrawer();
+            drawer.show(sampleJourneyData);
+        });
+    });
+});
+</script>
+{% endblock %} 

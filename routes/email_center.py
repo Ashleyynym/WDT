@@ -2,18 +2,51 @@ import smtplib
 from email.mime.text import MIMEText
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import EmailLog, Cargo, db
+from models_new import EmailLog, Cargo, EmailTemplate, db
 from flask_babel import _
 
 bp = Blueprint('email_center', __name__, url_prefix='/email')
+
+@bp.route('/', methods=['GET'])
+@login_required
+def email_center():
+    """
+    Main Email Center - Shows email logs and templates
+    """
+    # Get all email logs
+    email_logs = EmailLog.query.order_by(EmailLog.sent_at.desc()).limit(50).all()
+    
+    # Get all email templates
+    email_templates = EmailTemplate.query.all()
+    
+    return render_template('email_center_main.html', 
+                         email_logs=email_logs, 
+                         email_templates=email_templates)
 
 @bp.route('/templates', methods=['GET', 'POST'])
 @login_required
 def manage_templates():
     """
-    邮件模板管理 (TODO)
+    Email template management
     """
-    return render_template('email_center.html')
+    if request.method == 'POST':
+        name = request.form.get('name')
+        subject = request.form.get('subject')
+        body = request.form.get('body')
+        
+        if name and subject and body:
+            template = EmailTemplate(
+                name=name,
+                subject=subject,
+                body=body
+            )
+            db.session.add(template)
+            db.session.commit()
+            flash(_("Email template created successfully."), "success")
+            return redirect(url_for('email_center.manage_templates'))
+    
+    templates = EmailTemplate.query.all()
+    return render_template('email_templates.html', templates=templates)
 
 @bp.route('/send/<int:cargo_id>', methods=['GET', 'POST'])
 @login_required

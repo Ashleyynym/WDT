@@ -8,6 +8,22 @@ from flask_babel import _
 bp = Blueprint('bills', __name__, url_prefix='/bills')
 BILL_UPLOAD_FOLDER = 'uploads/bills/'
 
+@bp.route('/')
+@login_required
+def bills_list():
+    """General bills list - show all bills for the current user"""
+    # Get all bills, optionally filtered by user permissions
+    if current_user.has_permission('manage_users'):
+        # Admin can see all bills
+        bills = Bill.query.all()
+    else:
+        # Regular users see bills for cargos they're responsible for
+        bills = Bill.query.join(Cargo).filter(
+            Cargo.responsibles.any(id=current_user.id)
+        ).all()
+    
+    return render_template('bills_list.html', bills=bills)
+
 @bp.route('/<int:cargo_id>')
 @login_required
 def list_bills(cargo_id):
