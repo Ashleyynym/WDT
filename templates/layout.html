@@ -52,13 +52,6 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('WDT Air Cargo') }}</a>
             
-            <div class="navbar-nav me-auto">
-                <a class="nav-link" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('Dashboard') }}</a>
-                <a class="nav-link" href="{{ url_for('cargo.cargo_list') }}">{{ _('Cargo Management') }}</a>
-                {% if current_user.is_authenticated and current_user.has_permission('manage_users') %}
-                <a class="nav-link" href="{{ url_for('users.user_management') }}">{{ _('User & Role Mgmt') }}</a>
-                {% endif %}
-            </div>
             
             <div class="navbar-nav ms-auto">
                 <!-- Timezone Selector -->
@@ -95,19 +88,32 @@
         </div>
     </nav>
     
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes">
-                    {% for category, message in messages %}
-                        <li class="flash {{ category }}">{{ message | safe }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
+    <div class="d-flex">
+        <nav id="sidebar">
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('Dashboard') }}</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('cargo.cargo_list') }}">{{ _('Cargo Management') }}</a></li>
+                {% if current_user.is_authenticated and current_user.has_permission('manage_users') %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('users.user_management') }}">{{ _('User & Role Mgmt') }}</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        <div id="content-wrapper" class="flex-grow-1">
+            <div class="container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <ul class="flashes">
+                            {% for category, message in messages %}
+                                <li class="flash {{ category }}">{{ message | safe }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
 
-        {% block content %}
-        {% endblock %}
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
     </div>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
