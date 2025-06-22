@@ -140,6 +140,11 @@ def register():
             flash(_("Username already exists."), "danger")
             return redirect(url_for('users.register'))
 
+        # Check if email already exists
+        if User.query.filter_by(email=email).first():
+            flash(_("Email already registered."), "danger")
+            return redirect(url_for('users.register'))
+
         # Find or create the Role by its name
         role = Role.query.filter_by(name=role_name).first()
         if not role:
