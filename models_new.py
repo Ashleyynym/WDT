@@ -240,14 +240,14 @@ class Role(db.Model):
         return f"<Role {self.name}>"
     
     def has_permission(self, permission):
-        """Check if role has specific permission"""
-        # Check if role has the feature with the given key
-        feature = Feature.query.filter_by(key=permission).first()
-        if not feature:
+        """Check if role has specific permission (using JSON permissions field)"""
+        if not self.permissions:
             return False
-        
-        # Check if this role has this feature
-        return feature in self.features
+        try:
+            perms = json.loads(self.permissions)
+            return permission in perms
+        except Exception:
+            return False
 
 # Predefined permissions
 PERMISSIONS = {

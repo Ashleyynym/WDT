@@ -6,15 +6,32 @@ body {
 }
 
 .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    z-index: 1050;
+    min-height: 64px;
+    height: 64px;
     background: #343A40 !important;
     background-image: none !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-bottom: 1px solid #e0e0e0;
 }
 
+.navbar .container-fluid {
+    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
 .navbar .navbar-brand,
 .navbar .nav-link {
-    color: #666 !important;
+    color: #fff !important;
 }
 
 .navbar .nav-link:hover {
@@ -402,12 +419,20 @@ body {
 }
 
 .navbar-brand {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
     font-weight: 600 !important;
     font-size: 1.3rem !important;
     letter-spacing: 0.5px !important;
-    color: #fff !important;
     text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
     font-family: 'Poppins', sans-serif !important;
+    transition: none !important;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    z-index: 1;
 }
 
 .navbar-toggle {
@@ -570,113 +595,110 @@ body {
 
 /* Original Sidebar Styles - Only changing active state colors */
 .main-sidebar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: #fff;
-  padding-top: 80px;
-  min-height: 100vh;
-  width: 230px;
-  z-index: 810;
-  -webkit-box-shadow: 1px 3px 7px rgba(0, 0, 0, 0.3);
-  box-shadow: 1px 3px 7px rgba(0, 0, 0, 0.3);
-  -webkit-transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
-  -moz-transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
-  -ms-transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
-  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+    top: 64px;
+    height: calc(100vh - 64px);
+    transition: none !important;
+    position: fixed;
+    left: 0;
+    z-index: 1040;
+    background: #fff;
+    padding-top: 0;
+    width: 230px;
+    -webkit-box-shadow: 1px 3px 7px rgba(0, 0, 0, 0.3);
+    box-shadow: 1px 3px 7px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar {
-  padding-bottom: 10px;
-  font-size: 16px;
+    padding-bottom: 10px;
+    font-size: 16px;
 }
 
 .sidebar-menu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  white-space: nowrap;
-  overflow: hidden;
+    list-style: none;
+    margin: 0 0 0 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .sidebar-menu:hover {
-  overflow: visible;
+    overflow: visible;
 }
 
 .sidebar-menu > li {
-  position: relative;
-  margin: 0;
-  padding: 0;
+    position: relative;
+    margin: 0;
+    padding: 0;
 }
 
 .sidebar-menu > li > a {
-  padding: 0;
-  text-align: left;
-  margin-bottom: 0;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  padding-left: 15px;
-  padding-right: 15px;
-  color: #333;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  background-color: #fff;
-  font-size: 15px;
+    padding: 0;
+    text-align: left;
+    margin-bottom: 0;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+    padding-right: 15px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    font-size: 15px;
 }
 
 .sidebar-menu > li > a:hover {
-  background-color: #f8f9fa;
-  color: #007BFF;
+    background-color: #f8f9fa;
+    color: #007BFF;
 }
 
 /* Quantum Able Active State Colors - Border on right side */
 .sidebar-menu > li.active > a {
-  background-color: #e3f2fd !important;
-  color: #007bff !important;
-  border-right: 3px solid #007bff !important;
+    background-color: #e3f2fd !important;
+    color: #007bff !important;
+    border-right: 3px solid #007bff !important;
 }
 
 .sidebar-menu > li > a > i {
-  padding-right: 6px;
-  display: inline;
-  width: 20px;
-  text-align: center;
+    padding-right: 6px;
+    display: inline;
+    width: 20px;
+    text-align: center;
 }
 
 .nav-level {
-  padding: 10px 25px 10px 15px;
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  color: #999;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+    padding: 10px 25px 10px 15px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    color: #999;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .treeview {
-  position: relative;
+    position: relative;
 }
 
 .treeview > a {
-  position: relative;
+    position: relative;
 }
 
 .waves-effect {
-  position: relative;
-  cursor: pointer;
-  display: inline-block;
-  overflow: hidden;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .waves-dark {
-  background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* Icon styles - using Simple Line Icons */
@@ -689,58 +711,37 @@ body {
 
 /* Content wrapper adjustments */
 #content-wrapper {
-  margin-left: 230px;
-  transition: margin-left 0.3s ease-in-out;
+    padding-top: 80px !important;
+    margin-left: 230px;
+    transition: margin-left 0.3s ease-in-out;
 }
 
 /* Responsive adjustments */
 @media (max-width: 767px) {
-  .main-sidebar {
-    padding-top: 80px;
-    -webkit-transform: translate(-230px, 0);
-    -moz-transform: translate(-230px, 0);
-    -ms-transform: translate(-230px, 0);
-    transform: translate(-230px, 0);
-  }
-  
-  #content-wrapper {
-    margin-left: 0;
-  }
+    .main-sidebar {
+        top: 64px;
+        height: calc(100vh - 64px);
+        transition: none !important;
+    }
+    #content-wrapper {
+        padding-top: 80px !important;
+        margin-left: 0;
+    }
 }
 
 /* Override existing sidebar styles */
 #sidebar {
-  display: none;
+    display: none;
 }
 
 /* Hide the old sidebar toggle */
 #sidebar-toggle {
-  display: none;
+    display: none;
 }
 
 /* Sidebar Toggle Button */
 .sidebar-toggle {
-    display: inline-block;
-    width: 35px;
-    height: 35px;
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1.4rem;
-    cursor: pointer;
-    padding: 0;
-    margin-right: 1rem;
-    position: relative;
-}
-
-.sidebar-toggle:before {
-    content: "☰";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 1.4rem;
-    line-height: 1;
+    padding-left: 20px !important;
 }
 
 .sidebar-toggle:hover {
@@ -749,12 +750,17 @@ body {
 
 /* Align toggle button with collapsed sidebar */
 .sidebar-mini.sidebar-collapse .sidebar-toggle {
-    margin-left: 70px;
+    position: static !important;
+    margin: 0 !important;
+    padding-left: 20px !important;
+    color: #fff !important;
+    transition: none !important;
 }
 
 /* Adjust navbar container for collapsed state */
 .sidebar-mini.sidebar-collapse .navbar .container-fluid {
-    padding-left: 0;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
 }
 
 /* Override Bootstrap container-fluid padding when sidebar is collapsed */
@@ -765,123 +771,176 @@ body {
 
 /* Position toggle button correctly */
 .sidebar-mini.sidebar-collapse .sidebar-toggle {
-    position: absolute !important;
-    left: 17.5px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+    position: static !important;
     margin-left: 0 !important;
     margin-right: 1rem;
-    z-index: 1001;
+    transition: none !important;
 }
 
 /* Ensure navbar has relative positioning for absolute toggle button */
 .sidebar-mini.sidebar-collapse .navbar {
-    position: relative;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1050;
+    transition: none !important;
 }
 
 /* Position navbar brand to the right of toggle button when sidebar is collapsed */
 .sidebar-mini.sidebar-collapse .navbar-brand {
-    margin-left: 90px !important;
-    font-weight: 600 !important;
-    font-size: 1.3rem !important;
-    letter-spacing: 0.5px !important;
+    margin-left: 0 !important;
     color: #fff !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
 }
 
 /* Collapsed Sidebar Styles */
 .sidebar-mini.sidebar-collapse .main-sidebar {
-  width: 70px;
+    width: 70px;
 }
 
 .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a > span,
 .sidebar-mini.sidebar-collapse .main-sidebar .nav-level {
-  display: none;
+    display: none;
 }
 
 .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a {
-  padding: 0;
-  text-align: center;
-  margin-bottom: 0;
-  height: 70px;
-  width: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    padding: 0;
+    text-align: center;
+    margin-bottom: 0;
+    height: 70px;
+    width: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a > i {
-  padding-right: 0;
-  width: 100%;
-  text-align: center;
-  font-size: 18px;
+    padding-right: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 18px;
 }
 
 .sidebar-mini.sidebar-collapse #content-wrapper {
-  margin-left: 70px;
+    margin-left: 70px;
 }
 
 /* Quantum Able Active State for collapsed sidebar - Border on right side */
 .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li.active > a {
-  background: #e3f2fd !important;
-  color: #007bff !important;
-  border-right: 3px solid #007bff !important;
+    background: #e3f2fd !important;
+    color: #007bff !important;
+    border-right: 3px solid #007bff !important;
 }
 
 /* Responsive adjustments for collapsed sidebar */
 @media (max-width: 767px) {
-  .sidebar-mini.sidebar-collapse .main-sidebar {
-    width: 230px;
-  }
-  
-  .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a > span,
-  .sidebar-mini.sidebar-collapse .main-sidebar .nav-level {
-    display: block;
-  }
-  
-  .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a {
-    padding: 12px 5px 12px 15px;
-    text-align: left;
-    height: auto;
-    width: auto;
-    display: block;
-  }
-  
-  .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a > i {
-    padding-right: 6px;
-    width: 20px;
-    text-align: center;
-  }
-  
-  .sidebar-mini.sidebar-collapse #content-wrapper {
-    margin-left: 0;
-  }
+    .sidebar-mini.sidebar-collapse .main-sidebar {
+        width: 230px;
+    }
+    
+    .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a > span,
+    .sidebar-mini.sidebar-collapse .main-sidebar .nav-level {
+        display: block;
+    }
+    
+    .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a {
+        padding: 12px 5px 12px 15px;
+        text-align: left;
+        height: auto;
+        width: auto;
+        display: block;
+    }
+    
+    .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a > i {
+        padding-right: 6px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .sidebar-mini.sidebar-collapse #content-wrapper {
+        margin-left: 0;
+    }
 }
 
 /* Tooltip functionality for collapsed sidebar - Quantum Able approach */
 .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li > a {
-  position: relative;
-  overflow: visible;
+    position: relative;
+    overflow: visible;
 }
 
 /* Quantum Able exact implementation */
 .sidebar-mini.sidebar-collapse .main-sidebar .sidebar-menu > li:hover > a > span {
-  display: block !important;
-  position: absolute !important;
-  width: 190px !important;
-  left: 70px !important;
-  top: 0 !important;
-  padding: 0 5px 0 20px !important;
-  background: #fff !important;
-  color: #666 !important;
-  box-shadow: 2px 1px 5px 1px rgba(128, 128, 128, 0.28) !important;
-  white-space: nowrap !important;
-  z-index: 1000 !important;
-  border-top-right-radius: 4px !important;
-  border-bottom-right-radius: 4px !important;
-  font-size: 15px !important;
-  line-height: 1.2 !important;
-  height: 70px !important;
-  display: flex !important;
-  align-items: center !important;
+    display: block !important;
+    position: absolute !important;
+    width: 190px !important;
+    left: 70px !important;
+    top: 0 !important;
+    padding: 0 5px 0 20px !important;
+    background: #fff !important;
+    color: #666 !important;
+    box-shadow: 2px 1px 5px 1px rgba(128, 128, 128, 0.28) !important;
+    white-space: nowrap !important;
+    z-index: 1000 !important;
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.navbar .container-fluid {
+    display: flex;
+    align-items: center;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: relative;
+}
+
+/* Remove sidebar-collapse-specific navbar-brand and toggle rules */
+.sidebar-mini.sidebar-collapse .navbar-brand,
+.sidebar-mini.sidebar-collapse .sidebar-toggle {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+    transition: none !important;
+}
+
+/* Force base style for .navbar-brand and .sidebar-toggle */
+.navbar-brand {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 1.3rem !important;
+    letter-spacing: 0.5px !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    font-family: 'Poppins', sans-serif !important;
+    transition: none !important;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+}
+
+.sidebar-toggle {
+    position: static !important;
+    margin: 0 1rem 0 0 !important;
+    color: #fff !important;
+    transition: none !important;
+    z-index: 2;
+}
+
+.navbar-nav.ms-auto {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin: 0 !important;
+    padding: 0 !important;
 }

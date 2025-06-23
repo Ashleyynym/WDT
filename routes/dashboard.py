@@ -19,8 +19,8 @@ def dashboard_home():
     # Get sort parameter from request
     sort_by = request.args.get('sort', 'date_added')
     
-    # Get all cargos
-    all_cargos = Cargo.query.all()
+    # Get all cargos (only unarchived)
+    all_cargos = Cargo.query.filter_by(is_archived=False).all()
     
     # Get user's timezone from session
     user_timezone = session.get('timezone', 'America/Los_Angeles')

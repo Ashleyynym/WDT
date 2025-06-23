@@ -772,8 +772,6 @@ h2 {
   color: var(--color-dark);
 }
 
-<<<<<<< HEAD
-=======
 /* Retractable Sidebar - REMOVED - Using Quantum Able sidebar instead */
 
 /* When sidebar is not present (user not logged in) */
@@ -781,15 +779,12 @@ h2 {
   margin-left: 0 !important;
 }
 
->>>>>>> 37c481c (v1.0.1)
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
         margin: 1rem;
         padding: 1.5rem;
     }
-<<<<<<< HEAD
-=======
 
   .main-sidebar {
         position: static;
@@ -802,7 +797,6 @@ h2 {
         margin-left: 0;
         padding: 1rem;
     }
->>>>>>> 37c481c (v1.0.1)
     
     h1 {
         font-size: 2rem;
@@ -1034,4 +1028,8 @@ h2 {
 
 .text-decoration-none:hover {
   text-decoration: underline !important;
+}
+
+#content-wrapper {
+    padding-top: 72px !important;
 }

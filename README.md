@@ -121,3 +121,9 @@ pipenv shell
 - **Warehouse Staff**: Limited cargo access with DO/POD signing
 - **External Partners**: Record-only access for specific functions
 
+## ⚠️ Important: Do NOT Commit venv
+
+- Never commit your `venv/` folder (or any virtual environment) to Git. Virtual environments are platform-specific and will not work across Windows, macOS, and Linux.
+- Always use the provided `python setup.py` script to create a fresh virtual environment and install dependencies on your own machine.
+- The setup script will warn you if your venv was created on a different OS, and will prompt you to recreate it if needed.
+

@@ -186,38 +186,33 @@ def login():
             login_user(user)
             next_page = request.args.get("next")
             
-            # Detect and set user's timezone if not already set
-            if not session.get('timezone'):
-                # Get timezone from request headers or default
-                timezone = request.headers.get('X-Timezone', 'America/Los_Angeles')
-                
-                # Validate and map timezone
-                valid_timezones = [
-                    'America/Los_Angeles', 'America/New_York', 'America/Chicago', 
-                    'America/Denver', 'UTC', 'Asia/Shanghai', 'Asia/Tokyo', 
-                    'Europe/London', 'Europe/Paris'
-                ]
-                
-                if timezone in valid_timezones:
-                    session['timezone'] = timezone
-                else:
-                    session['timezone'] = 'America/Los_Angeles'
-                
-                # Show timezone alert
-                timezone_names = {
-                    'America/Los_Angeles': 'Los Angeles (PST/PDT)',
-                    'America/New_York': 'New York (EST/EDT)',
-                    'America/Chicago': 'Chicago (CST/CDT)',
-                    'America/Denver': 'Denver (MST/MDT)',
-                    'UTC': 'UTC',
-                    'Asia/Shanghai': 'Shanghai (CST)',
-                    'Asia/Tokyo': 'Tokyo (JST)',
-                    'Europe/London': 'London (GMT/BST)',
-                    'Europe/Paris': 'Paris (CET/CEST)'
-                }
-                
-                display_name = timezone_names.get(session['timezone'], session['timezone'])
-                flash(f"<div style='font-size: 16px; font-weight: bold;'>Welcome! Your timezone has been set to: <span style='color: #007bff;'>{display_name}</span></div><div style='font-size: 14px; margin-top: 5px;'>You can change this anytime using the timezone dropdown in the navigation bar.</div>", "info")
+            # Always set session timezone (detect or default)
+            timezone = request.headers.get('X-Timezone', 'America/Los_Angeles')
+            valid_timezones = [
+                'America/Los_Angeles', 'America/New_York', 'America/Chicago', 
+                'America/Denver', 'UTC', 'Asia/Shanghai', 'Asia/Tokyo', 
+                'Europe/London', 'Europe/Paris'
+            ]
+            if timezone in valid_timezones:
+                session['timezone'] = timezone
+            elif not session.get('timezone'):
+                session['timezone'] = 'America/Los_Angeles'
+            # Always show timezone reminder (short, bold, red)
+            timezone_names = {
+                'America/Los_Angeles': 'Los Angeles (PST/PDT)',
+                'America/New_York': 'New York (EST/EDT)',
+                'America/Chicago': 'Chicago (CST/CDT)',
+                'America/Denver': 'Denver (MST/MDT)',
+                'UTC': 'UTC',
+                'Asia/Shanghai': 'Shanghai (CST)',
+                'Asia/Tokyo': 'Tokyo (JST)',
+                'Europe/London': 'London (GMT/BST)',
+                'Europe/Paris': 'Paris (CET/CEST)'
+            }
+            display_name = timezone_names.get(session['timezone'], session['timezone'])
+            flash(_("Your current timezone is <b>%(tz)s</b>.<br><span style='font-size:0.97em;'>If this is incorrect, change it in the top bar.</span>" , tz=display_name), "danger")
+            # Always flash a welcome message after login (short)
+            flash(_("Welcome, %(username)s!", username=user.username), "success")
             
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for("dashboard.dashboard_home")

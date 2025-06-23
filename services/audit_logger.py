@@ -45,13 +45,10 @@ class AuditLogger:
             )
             
             db.session.add(audit_entry)
-            db.session.commit()
-            
             logger.info(f"Audit log: {action} on {table_name}:{record_id} by user {user_id}")
             
         except Exception as e:
             logger.error(f"Error logging audit entry: {str(e)}")
-            db.session.rollback()
     
     def log_insert(self, table_name, record_id, new_values=None, user_id=None):
         """Log an insert operation"""
@@ -143,12 +140,9 @@ class AuditLogger:
                     table_name = obj.__tablename__
                     record_id = getattr(obj, 'id', None)
                     if record_id:
-                        # Get the original state
-                        original_state = session.get_state(obj)
-                        if original_state:
-                            old_values = self.format_values_for_log(original_state)
-                            new_values = self.format_values_for_log(obj)
-                            self.log_update(table_name, record_id, old_values, new_values)
+                        # Only log new values for now (old_values not available)
+                        new_values = self.format_values_for_log(obj)
+                        self.log_update(table_name, record_id, None, new_values)
             
             for obj in session.deleted:
                 if hasattr(obj, '__tablename__') and obj.__tablename__ in self.tracked_tables:

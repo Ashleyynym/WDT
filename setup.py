@@ -8,8 +8,9 @@ import os
 import sys
 import subprocess
 import platform
-import venv
 import shutil
+
+VENV_DIR = "venv"
 
 def run_command(command, shell=True, check=True):
     """Run a command and return success status"""
@@ -46,7 +47,7 @@ def create_virtual_environment():
     """Create virtual environment using Python's venv module"""
     print("\n📦 Creating virtual environment...")
     try:
-        venv.create("venv", with_pip=True)
+        subprocess.check_call([sys.executable, "-m", "venv", VENV_DIR])
         print("✅ Virtual environment created successfully")
         return True
     except Exception as e:
@@ -111,6 +112,29 @@ echo "To deactivate, type: deactivate"
     
     print(f"✅ Created activation script: {script_file}")
 
+def venv_platform_file():
+    return os.path.join(VENV_DIR, '.platform')
+
+def get_platform_tag():
+    if os.name == 'nt':
+        return 'windows'
+    elif sys.platform.startswith('darwin'):
+        return 'macos'
+    else:
+        return 'linux'
+
+def venv_platform_mismatch():
+    plat_file = venv_platform_file()
+    if not os.path.exists(plat_file):
+        return False
+    with open(plat_file, 'r') as f:
+        venv_tag = f.read().strip()
+    return venv_tag != get_platform_tag()
+
+def write_venv_platform():
+    with open(venv_platform_file(), 'w') as f:
+        f.write(get_platform_tag())
+
 def main():
     """Main setup function"""
     print("🚀 WDT Supply Chain - Universal Setup")
@@ -125,35 +149,20 @@ def main():
         print("❌ requirements.txt not found in current directory")
         return
     
-    # Check if virtual environment already exists
-    if os.path.exists("venv"):
-        print("⚠️  Virtual environment already exists")
-        response = input("Do you want to recreate it? (y/N): ").lower()
-        if response == 'y':
-            print("🗑️  Removing existing virtual environment...")
-            shutil.rmtree("venv")
-        else:
-            print("📝 Using existing virtual environment")
-            create_activation_script()
-            print("\n🎉 Setup completed!")
-            print("\nNext steps:")
-            print("1. Run the activation script:")
-            if detect_platform() == "windows":
-                print("   activate.bat")
-            else:
-                print("   ./activate.sh")
-            print("2. Or activate manually:")
-            if detect_platform() == "windows":
-                print("   venv\\Scripts\\activate")
-            else:
-                print("   source venv/bin/activate")
-            print("3. Run the application:")
-            print("   python app.py")
-            return
-    
-    # Create virtual environment
-    if not create_virtual_environment():
-        return
+    # Check if venv exists
+    if os.path.isdir(VENV_DIR):
+        if venv_platform_mismatch():
+            print(f"⚠️  Existing virtual environment was created on a different OS.")
+            print(f"   Detected: {get_platform_tag()} | venv was: {open(venv_platform_file()).read().strip()}")
+            print(f"❌ This venv will not work. Please delete the 'venv' folder and rerun this script.")
+            sys.exit(1)
+        print(f"⚠️  Virtual environment already exists at '{VENV_DIR}'.")
+        print(f"➡️  Using existing virtual environment.")
+    else:
+        print(f"🔧 Creating virtual environment at '{VENV_DIR}'...")
+        subprocess.check_call([sys.executable, "-m", "venv", VENV_DIR])
+        write_venv_platform()
+        print(f"✅ Virtual environment created.")
     
     # Install dependencies
     if not install_dependencies():
@@ -179,6 +188,10 @@ def main():
     print("4. Open your browser to: http://localhost:5000")
     
     print("\n💡 Tip: You can also use the activation script anytime to quickly activate the environment!")
+
+    print("\n🎉 Setup complete!")
+    print("👉 To start the application, run:")
+    print("   python run.py\n")
 
 if __name__ == "__main__":
     main() 

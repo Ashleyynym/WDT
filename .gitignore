@@ -23,10 +23,9 @@ MANIFEST
 
 # Virtual Environment
 venv/
-env/
-ENV/
-env.bak/
-venv.bak/
+venv-windows/
+venv-unix/
+.venv/
 
 # IDE
 .vscode/
@@ -60,6 +59,8 @@ logs/
 # Generated activation scripts (created by setup.py)
 activate.bat
 activate.sh
+start.bat
+start.sh
 
 # Environment variables
 .env
