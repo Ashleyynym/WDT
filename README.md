@@ -47,65 +47,43 @@ start.bat
 - ✅ **Start the Flask application**
 - ✅ **Open at http://localhost:5000**
 
-## 🔄 Data Synchronization Options
+## 🗄️ Database Configuration
 
-### Option A: Google Sheets API Sync (Recommended - Professional)
+### Option A: Google Cloud SQL (Recommended - Production)
 
 **Perfect for teams who want:**
-- ✅ **Real-time two-way sync** (app ↔ Google Sheets)
-- ✅ **Professional setup** with service account authentication
-- ✅ **Automatic updates** when you make changes in the app
-- ✅ **Secure credentials** with proper access control
-- ✅ **Free hosting** with Google Sheets
+- ✅ **Professional managed database** with automatic backups
+- ✅ **Real-time collaboration** - multiple users can access simultaneously
+- ✅ **Scalable infrastructure** - easy to upgrade as you grow
+- ✅ **High availability** - 99.95% uptime SLA
+- ✅ **Built-in security** - encryption, IAM, and network controls
 
 **Setup:**
-1. **Follow [GOOGLE_CLOUD_SETUP.md](GOOGLE_CLOUD_SETUP.md)** for detailed setup instructions
-2. **Create Google Cloud Service Account** and download credentials
-3. **Share your Google Sheet** with the service account
-4. **Configure environment variables** in `.env`
+1. **Follow [GOOGLE_CLOUD_SQL_SETUP.md](GOOGLE_CLOUD_SQL_SETUP.md)** for detailed setup instructions
+2. **Create Google Cloud SQL instance** (MySQL 8.0 recommended)
+3. **Configure environment variables** in `.env`:
+   ```env
+   DATABASE_URL=mysql+pymysql://username:password@IP_ADDRESS:3306/wdt_supplychain
+   ```
+4. **Run migrations**: `flask db upgrade`
 
-**Usage:**
-- **Manual sync**: `python google_sheets_sync.py`
-- **Auto sync on startup**: Set `SYNC_ON_STARTUP=true` in `.env`
-- **Scheduled sync**: Every 15 minutes (already configured)
+**Benefits:**
+- **No database conflicts** - Multiple users can work simultaneously
+- **Automatic backups** - Google handles data protection
+- **Professional monitoring** - Built-in logging and alerts
+- **Cost-effective** - Pay only for what you use (~$8-25/month)
 
-### Option B: CSV Export/Import (Simple - Manual)
+### Option B: Local SQLite (Development)
 
-**For teams who prefer:**
-- ✅ **Simple setup** (no Google Cloud account needed)
-- ✅ **Manual control** over when to sync
-- ✅ **CSV file sharing** via email or file sharing
+**For development and testing:**
+```env
+DATABASE_URL=sqlite:///wdt_supplychain.db
+```
 
-**Setup:**
-1. **Create Google Sheets** following [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md)
-2. **Update URLs** in `sync_from_sheet.py`
-3. **Export data**: `python export_to_sheet.py`
-
-**Usage:**
-- **Export to CSV**: `python export_to_sheet.py`
-- **Import from CSV**: `python sync_from_sheet.py`
-
-### Option C: Git Database Sharing (Current Setup)
-
-**For teams who prefer:**
-- ✅ **Simple setup** (database included in Git)
-- ✅ **Offline access** (no internet required)
-- ✅ **Version control** for database changes
-
-**For Team Members:**
-- The database (`wdt_supplychain.db`) is included in the repository
-- **To get the latest database:** `git pull` will update both code and database
-- **To share your changes:** `git add . && git commit -m "message" && git push`
-
-**Database Updates:**
-- When you add cargo, upload files, or make changes, commit them to share
-- Your partner can pull the latest database with: `git pull origin main`
-- The database includes all cargo records, attachments, billing, and user data
-
-**Important Notes:**
-- ⚠️ **Don't run the app simultaneously** - only one person should use it at a time
-- 🔄 **Always pull before starting work** to get the latest data
-- 💾 **Commit your changes regularly** to keep the database synchronized
+**Limitations:**
+- ⚠️ **Single user only** - Database locks prevent concurrent access
+- ⚠️ **No automatic backups** - Manual backup required
+- ⚠️ **Limited scalability** - Not suitable for production
 
 ### 🔧 Alternative Setup Options
 
@@ -186,11 +164,41 @@ pipenv shell
 
 5. **Access the system at** `http://localhost:5000`
 
+## 🚀 Deployment Options
+
+### Google Cloud Run (Recommended)
+```bash
+# Deploy to Cloud Run
+gcloud run deploy wdt-supplychain \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+
+### Google Compute Engine
+```bash
+# Deploy to GCE
+gcloud compute instances create wdt-app \
+  --zone=us-central1-a \
+  --machine-type=e2-micro \
+  --image-family=debian-11 \
+  --image-project=debian-cloud
+```
+
+### App Engine
+```yaml
+# app.yaml
+runtime: python39
+env_variables:
+  DATABASE_URL: "mysql+pymysql://..."
+```
+
 ## System Requirements
 
 - Python 3.8+
 - Flask 2.3.3+
-- SQLite database (included)
+- MySQL 8.0+ (for production) or SQLite (for development)
 
 ## User Roles
 

@@ -48,10 +48,10 @@ Thumbs.db
 instance/
 .webassets-cache
 
-# Database - COMMENTED OUT TO SHARE DATABASE
-# *.db
-# *.sqlite
-# *.sqlite3
+# Database files (exclude from Git)
+*.db
+*.sqlite
+*.sqlite3
 
 # Logs
 *.log
@@ -68,8 +68,16 @@ activate.sh
 # Uploads
 uploads/
 
-# Google Cloud Credentials (Sensitive - Never commit!)
+# Google Cloud credentials (if any)
 credentials.json
-*.json
-!package.json
-!babel.cfg 
+service-account-key.json
+
+# Google Sheets references (COMMENTED OUT TO SHARE DATABASE)
+# *.gsheet
+# *.gsheet3
+# *.gsheet4
+
+# Google Sheets references (COMMENTED OUT TO SHARE DATABASE)
+# *.gsheet
+# *.gsheet3
+# *.gsheet4 
