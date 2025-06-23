@@ -136,19 +136,21 @@ def main():
             print("📝 Using existing virtual environment")
             create_activation_script()
             print("\n🎉 Setup completed!")
-            print("\nNext steps:")
-            print("1. Run the activation script:")
+            print("\n📋 Next steps:")
+            print("🚀 EASIEST - One command to run everything:")
+            print("   python run.py")
+            print("\n💡 Alternative options:")
+            print("1. One-click files:")
+            if detect_platform() == "windows":
+                print("   Double-click: start.bat")
+            else:
+                print("   Double-click: start.sh or run: ./start.sh")
+            print("2. Manual activation:")
             if detect_platform() == "windows":
                 print("   activate.bat")
             else:
                 print("   ./activate.sh")
-            print("2. Or activate manually:")
-            if detect_platform() == "windows":
-                print("   venv\\Scripts\\activate")
-            else:
-                print("   source venv/bin/activate")
-            print("3. Run the application:")
-            print("   python app.py")
+            print("3. Access at: http://localhost:5000")
             return
     
     # Create virtual environment
@@ -164,21 +166,22 @@ def main():
     
     print("\n🎉 Setup completed successfully!")
     print("\n📋 Next steps:")
-    print("1. Run the activation script:")
+    print("🚀 EASIEST - One command to run everything:")
+    print("   python run.py")
+    print("\n💡 Alternative options:")
+    print("1. One-click files:")
+    if detect_platform() == "windows":
+        print("   Double-click: start.bat")
+    else:
+        print("   Double-click: start.sh or run: ./start.sh")
+    print("2. Manual activation:")
     if detect_platform() == "windows":
         print("   activate.bat")
     else:
         print("   ./activate.sh")
-    print("2. Or activate manually:")
-    if detect_platform() == "windows":
-        print("   venv\\Scripts\\activate")
-    else:
-        print("   source venv/bin/activate")
-    print("3. Run the application:")
-    print("   python app.py")
-    print("4. Open your browser to: http://localhost:5000")
+    print("3. Access at: http://localhost:5000")
     
-    print("\n💡 Tip: You can also use the activation script anytime to quickly activate the environment!")
+    print("\n💡 Tip: Use 'python run.py' for the easiest experience - no manual activation needed!")
 
 if __name__ == "__main__":
     main() 

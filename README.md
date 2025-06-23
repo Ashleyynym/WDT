@@ -47,10 +47,35 @@ start.bat
 - ✅ **Start the Flask application**
 - ✅ **Open at http://localhost:5000**
 
-### 🔄 Database Sharing & Collaboration
+## 🔄 Data Synchronization Options
+
+### Option A: Google Sheets Sync (Recommended - Free & Collaborative)
+
+**Perfect for teams who want:**
+- ✅ **Free data sharing** (no database hosting costs)
+- ✅ **Non-technical users** can edit data directly
+- ✅ **Real-time collaboration** on data
+- ✅ **Clean Git repository** (no binary files)
+
+**Setup:**
+1. **Create Google Sheets** following [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md)
+2. **Update URLs** in `sync_from_sheet.py`
+3. **Sync data**: `python sync_from_sheet.py`
+
+**Usage:**
+- **Manual sync**: `python sync_from_sheet.py`
+- **Auto sync on startup**: Set `SYNC_ON_STARTUP=true` in `.env`
+- **Scheduled sync**: Every 15 minutes (already configured)
+
+### Option B: Git Database Sharing (Current Setup)
+
+**For teams who prefer:**
+- ✅ **Simple setup** (database included in Git)
+- ✅ **Offline access** (no internet required)
+- ✅ **Version control** for database changes
 
 **For Team Members:**
-- The database (`wdt_supplychain.db`) is now included in the repository
+- The database (`wdt_supplychain.db`) is included in the repository
 - **To get the latest database:** `git pull` will update both code and database
 - **To share your changes:** `git add . && git commit -m "message" && git push`
 

@@ -1,37 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<<<<<<< HEAD
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-..." crossorigin="anonymous">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ _('WDT Supply Chain - Air Cargo System') }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-=======
-    <meta charset="UTF-8">
-    <title>{{ _('WDT Air Cargo System') }}</title>
     
     <!-- Bootstrap CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
-    <!-- Simple Line Icons for Quantum Able style -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.5.5/css/simple-line-icons.min.css">
-    
-    <!-- Custom CSS - Load after Bootstrap to override defaults -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/quantum_able.css') }}">
     
->>>>>>> 37c481c (v1.0.1)
     <style>
         body {
             font-size: .875rem;
@@ -88,13 +70,13 @@
             background-color: rgba(0, 123, 255, 0.1);
         }
         
-        .sidebar .nav-link .feather {
-            margin-right: 4px;
+        .sidebar .nav-link .bi {
+            margin-right: 8px;
             color: #727272;
         }
         
-        .sidebar .nav-link:hover .feather,
-        .sidebar .nav-link.active .feather {
+        .sidebar .nav-link:hover .bi,
+        .sidebar .nav-link.active .bi {
             color: inherit;
         }
         
@@ -201,72 +183,28 @@
                 height: auto;
                 padding-top: 0;
             }
-            
-            .sidebar-sticky {
-                height: auto;
-            }
         }
     </style>
 </head>
-<<<<<<< HEAD
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-=======
-<body class="sidebar-mini fixed">
-    <nav class="navbar navbar-expand-lg navbar-dark">
->>>>>>> 37c481c (v1.0.1)
-        <div class="container-fluid">
-            <!-- Sidebar toggle button - moved to leftmost position -->
-            <a href="#!" data-toggle="offcanvas" class="sidebar-toggle"></a>
-            
-<<<<<<< HEAD
-            <div class="navbar-nav me-auto">
-                <a class="nav-link" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('Dashboard') }}</a>
-                <a class="nav-link" href="{{ url_for('cargo.cargo_list') }}">{{ _('Cargo Management') }}</a>
-                {% if current_user.is_authenticated and current_user.has_permission('manage_users') %}
-                <a class="nav-link" href="{{ url_for('users.user_management') }}">{{ _('User & Role Mgmt') }}</a>
-                {% endif %}
-            </div>
-=======
-            <a class="navbar-brand" href="{{ url_for('dashboard.dashboard_home') }}">{{ _('WDT Air Cargo') }}</a>
->>>>>>> 37c481c (v1.0.1)
-            
-            <div class="navbar-nav ms-auto">
-                <!-- Timezone Selector -->
-                <div class="nav-item dropdown me-3">
-                    <select class="form-select form-select-sm" id="globalTimezoneSelect" onchange="changeGlobalTimezone()" style="font-size: 0.8rem; width: auto; min-width: 150px;">
-                        <option value="America/Los_Angeles" {% if session.get('timezone', 'America/Los_Angeles') == 'America/Los_Angeles' %}selected{% endif %}>Los Angeles (PST/PDT)</option>
-                        <option value="America/New_York" {% if session.get('timezone') == 'America/New_York' %}selected{% endif %}>New York (EST/EDT)</option>
-                        <option value="America/Chicago" {% if session.get('timezone') == 'America/Chicago' %}selected{% endif %}>Chicago (CST/CDT)</option>
-                        <option value="America/Denver" {% if session.get('timezone') == 'America/Denver' %}selected{% endif %}>Denver (MST/MDT)</option>
-                        <option value="UTC" {% if session.get('timezone') == 'UTC' %}selected{% endif %}>UTC</option>
-                        <option value="Asia/Shanghai" {% if session.get('timezone') == 'Asia/Shanghai' %}selected{% endif %}>Shanghai (CST)</option>
-                        <option value="Asia/Tokyo" {% if session.get('timezone') == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST)</option>
-                        <option value="Europe/London" {% if session.get('timezone') == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
-                        <option value="Europe/Paris" {% if session.get('timezone') == 'Europe/Paris' %}selected{% endif %}>Paris (CET/CEST)</option>
-                    </select>
-                </div>
-                
-                <!-- Language Switcher -->
-                <div class="nav-item dropdown me-3">
-                    <span class="navbar-text me-1">{{ _('Language:') }}</span>
-                    <a class="nav-link d-inline" href="{{ url_for('set_locale', lang_code='en') }}">EN</a> |
-                    <a class="nav-link d-inline" href="{{ url_for('set_locale', lang_code='zh') }}">中文</a>
-                </div>
-                
-                <!-- User Info -->
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{{ url_for('dashboard.dashboard_home') }}">
+            <strong>WDT Supply Chain</strong>
+        </a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
                 {% if current_user.is_authenticated %}
-                    <span class="navbar-text me-2">{{ _('Logged in as') }} {{ current_user.username }}</span>
                     <a class="nav-link" href="{{ url_for('users.logout') }}">{{ _('Logout') }}</a>
                 {% else %}
                     <a class="nav-link" href="{{ url_for('users.login') }}">{{ _('Login') }}</a>
                     <a class="nav-link" href="{{ url_for('users.register') }}">{{ _('Register') }}</a>
                 {% endif %}
             </div>
-            {% endif %}
         </div>
     </nav>
-<<<<<<< HEAD
 
     <div class="container-fluid">
         <div class="row">
@@ -353,61 +291,6 @@
             <!-- Main content - Full width when not authenticated -->
             <main class="col-12 px-md-4">
             {% endif %}
-=======
-    
-    <div class="d-flex">
-        {% if current_user.is_authenticated %}
-        <!-- Side-Nav-->
-        <aside class="main-sidebar hidden-print">
-            <section class="sidebar" id="sidebar-scroll">
-                <!-- Sidebar Menu-->
-                <ul class="sidebar-menu">
-                    <li class="nav-level">--- Navigation</li>
-                    <li class="treeview {% if request.endpoint == 'dashboard.dashboard_home' %}active{% endif %}">
-                        <a class="waves-effect waves-dark" href="{{ url_for('dashboard.dashboard_home') }}" data-title="Dashboard">
-                            <i class="icon-home"></i><span>{{ _('Dashboard') }}</span>
-                        </a>                
-                    </li>
-                    <li class="nav-level">--- Management</li>
-                    <li class="treeview {% if 'cargo' in request.endpoint %}active{% endif %}">
-                        <a class="waves-effect waves-dark" href="{{ url_for('cargo.cargo_list') }}" data-title="Cargo Management">
-                            <i class="icon-briefcase"></i><span>{{ _('Cargo Management') }}</span>
-                        </a>                
-                    </li>
-                    <li class="treeview {% if 'bills' in request.endpoint %}active{% endif %}">
-                        <a class="waves-effect waves-dark" href="{{ url_for('bills.bills_list') }}" data-title="Bills">
-                            <i class="icon-list"></i><span>{{ _('Bills') }}</span>
-                        </a>                
-                    </li>
-                    <li class="treeview {% if 'attachments' in request.endpoint %}active{% endif %}">
-                        <a class="waves-effect waves-dark" href="{{ url_for('attachments.attachments_list') }}" data-title="Attachments">
-                            <i class="icon-docs"></i><span>{{ _('Attachments') }}</span>
-                        </a>                
-                    </li>
-                    {% if current_user.has_permission('send_emails') %}
-                    <li class="treeview {% if 'email_center' in request.endpoint %}active{% endif %}">
-                        <a class="waves-effect waves-dark" href="{{ url_for('email_center.email_center') }}" data-title="Email Center">
-                            <i class="icon-envelope"></i><span>{{ _('Email Center') }}</span>
-                        </a>                
-                    </li>
-                    {% endif %}
-                    {% if current_user.has_permission('manage_users') %}
-                    <li class="nav-level">--- Administration</li>
-                    <li class="treeview {% if 'users' in request.endpoint %}active{% endif %}">
-                        <a class="waves-effect waves-dark" href="{{ url_for('users.user_management') }}" data-title="User & Role Mgmt">
-                            <i class="icon-people"></i><span>{{ _('User & Role Mgmt') }}</span>
-                        </a>                
-                    </li>
-                    {% endif %}
-                </ul>
-            </section>
-        </aside>
-        <div id="content-wrapper" class="flex-grow-1">
-        {% else %}
-        <div id="content-wrapper" class="flex-grow-1" style="margin-left: 0;">
-        {% endif %}
-            <div class="container">
->>>>>>> 37c481c (v1.0.1)
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <ul class="flashes">
@@ -426,137 +309,26 @@
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <!-- Bootstrap Bundle (includes Popper) -->
-<<<<<<< HEAD
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
-=======
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-      crossorigin="anonymous"
-    ></script>
->>>>>>> 37c481c (v1.0.1)
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     
     {% block scripts %}{% endblock %}
     
     <script>
-<<<<<<< HEAD
     // Detect user's timezone on page load (only for authenticated users)
     document.addEventListener('DOMContentLoaded', function() {
         {% if current_user.is_authenticated %}
-=======
-    // Sidebar toggle functionality and timezone detection
-    document.addEventListener('DOMContentLoaded', function() {
-        // Sidebar toggle functionality
-        const sidebarToggle = document.querySelector('.sidebar-toggle');
-        const body = document.body;
-        
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                body.classList.toggle('sidebar-collapse');
-                
-                // Debug: Log the state
-                console.log('Sidebar collapsed:', body.classList.contains('sidebar-collapse'));
-                
-                // Store the state in localStorage
-                if (body.classList.contains('sidebar-collapse')) {
-                    localStorage.setItem('sidebar-collapsed', 'true');
-                } else {
-                    localStorage.setItem('sidebar-collapsed', 'false');
-                }
-            });
-        }
-        
-        // Restore sidebar state on page load
-        const sidebarCollapsed = localStorage.getItem('sidebar-collapsed');
-        if (sidebarCollapsed === 'true') {
-            body.classList.add('sidebar-collapse');
-            console.log('Sidebar restored to collapsed state');
-        }
-        
-        // Debug: Check if tooltip elements exist
-        const sidebarLinks = document.querySelectorAll('.sidebar-menu > li > a');
-        console.log('Found sidebar links:', sidebarLinks.length);
-        sidebarLinks.forEach((link, index) => {
-            console.log(`Link ${index}:`, link.getAttribute('data-title'));
-        });
-        
-        // Detect user's timezone on page load
->>>>>>> 37c481c (v1.0.1)
-        detectAndSetTimezone();
-        {% endif %}
-    });
-    
-    function detectAndSetTimezone() {
-        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        
-        // Only show alert if user is logged in and no timezone is set
-        const isLoggedIn = {{ 'true' if current_user.is_authenticated else 'false' }};
-        const hasTimezone = {{ 'true' if session.get('timezone') else 'false' }};
-        
-        if (isLoggedIn && !hasTimezone) {
-            // Show alert with detected timezone
-            const timezoneNames = {
-                'America/Los_Angeles': 'Los Angeles (PST/PDT)',
-                'America/New_York': 'New York (EST/EDT)',
-                'America/Chicago': 'Chicago (CST/CDT)',
-                'America/Denver': 'Denver (MST/MDT)',
-                'UTC': 'UTC',
-                'Asia/Shanghai': 'Shanghai (CST)',
-                'Asia/Tokyo': 'Tokyo (JST)',
-                'Europe/London': 'London (GMT/BST)',
-                'Europe/Paris': 'Paris (CET/CEST)'
-            };
-            
-            const displayName = timezoneNames[userTimezone] || userTimezone;
-            alert('Your current timezone is: ' + displayName + '\n\nYou can change this anytime using the timezone dropdown in the navigation bar.');
-            
-            // Set the detected timezone
-            fetch('{{ url_for("detect_timezone") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({timezone: userTimezone})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update the dropdown selection
-                    const timezoneSelect = document.getElementById('globalTimezoneSelect');
-                    if (timezoneSelect) {
-                        timezoneSelect.value = data.timezone;
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error setting timezone:', error);
-            });
-        }
-    }
-    
-    function changeGlobalTimezone() {
-        const timezone = document.getElementById('globalTimezoneSelect').value;
-        
-        // Store timezone in session via AJAX
-        fetch('{{ url_for("set_timezone") }}', {
+        // Send timezone to server for user preferences
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        fetch('{{ url_for("users.update_timezone") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
             },
             body: JSON.stringify({timezone: timezone})
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Timezone updated to:', timezone);
-            } else {
-                console.error('Failed to update timezone');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating timezone:', error);
-        });
-    }
+        }).catch(error => console.log('Timezone update failed:', error));
+        {% endif %}
+    });
     </script>
 </body>
 </html>

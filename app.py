@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import pytz
 import json
 import logging
+import os
 
 from config import Config
 from extensions import db, migrate, login_manager, babel
@@ -89,6 +90,17 @@ def format_date_with_timezone(dt, timezone_name=None):
     except:
         return dt.strftime('%Y-%m-%d')
 
+def sync_from_google_sheets():
+    """Sync data from Google Sheets if enabled"""
+    if os.getenv('SYNC_ON_STARTUP') == 'true':
+        try:
+            logger.info("Starting Google Sheets sync on startup...")
+            from sync_from_sheet import sync_all
+            sync_all()
+            logger.info("Google Sheets sync completed successfully")
+        except Exception as e:
+            logger.error(f"Google Sheets sync failed: {e}")
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -117,6 +129,9 @@ def create_app():
 
         # Initialize WorkflowEngine (don't assign to app)
         workflow_engine = WorkflowEngine()
+        
+        # Sync from Google Sheets if enabled
+        sync_from_google_sheets()
 
     # Register context processors for timezone utilities
     @app.context_processor
