@@ -173,7 +173,15 @@ def main():
     
     print("\n🎉 Setup completed successfully!")
     print("\n📋 Next steps:")
-    print("1. Run the activation script:")
+    print("🚀 EASIEST - One command to run everything:")
+    print("   python run.py")
+    print("\n💡 Alternative options:")
+    print("1. One-click files:")
+    if detect_platform() == "windows":
+        print("   Double-click: start.bat")
+    else:
+        print("   Double-click: start.sh or run: ./start.sh")
+    print("2. Manual activation:")
     if detect_platform() == "windows":
         print("   activate.bat")
     else:
