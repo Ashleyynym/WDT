@@ -1,0 +1,166 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>{{ _('Billing Management') }}</h1>
+
+<!-- Filters -->
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label for="statusFilter" class="form-label">{{ _('Payment Status') }}</label>
+        <select class="form-select" id="statusFilter" onchange="applyFilters()">
+            <option value="All" {% if selected_status == 'All' %}selected{% endif %}>{{ _('All Statuses') }}</option>
+            <option value="Unpaid" {% if selected_status == 'Unpaid' %}selected{% endif %}>{{ _('Unpaid') }}</option>
+            <option value="Paid" {% if selected_status == 'Paid' %}selected{% endif %}>{{ _('Paid') }}</option>
+            <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>{{ _('Pending') }}</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="categoryFilter" class="form-label">{{ _('Category') }}</label>
+        <select class="form-select" id="categoryFilter" onchange="applyFilters()">
+            <option value="All" {% if selected_category == 'All' %}selected{% endif %}>{{ _('All Categories') }}</option>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="mawbFilter" class="form-label">{{ _('MAWB') }}</label>
+        <input type="text" class="form-control" id="mawbFilter" placeholder="{{ _('Search by MAWB') }}" value="{{ mawb_filter or '' }}" onchange="applyFilters()">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-primary" onclick="applyFilters()">{{ _('Apply Filters') }}</button>
+        <a href="{{ url_for('bills.bills_list') }}" class="btn btn-secondary ms-2">{{ _('Clear') }}</a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary">{{ bills|length }}</h5>
+                <p class="card-text">{{ _('Total Bills') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-warning">{{ bills|selectattr('payment_status', 'equalto', 'Unpaid')|list|length }}</h5>
+                <p class="card-text">{{ _('Unpaid Bills') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">{{ bills|selectattr('payment_status', 'equalto', 'Paid')|list|length }}</h5>
+                <p class="card-text">{{ _('Paid Bills') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-info">{{ "%.2f"|format(bills|sum(attribute='amount')) }}</h5>
+                <p class="card-text">{{ _('Total Amount') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bills Table -->
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>{{ _('MAWB') }}</th>
+                <th>{{ _('Supplier') }}</th>
+                <th>{{ _('Category') }}</th>
+                <th>{{ _('Amount') }}</th>
+                <th>{{ _('Status') }}</th>
+                <th>{{ _('Uploaded By') }}</th>
+                <th>{{ _('Upload Date') }}</th>
+                <th>{{ _('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bill in bills %}
+            <tr>
+                <td>
+                    <a href="{{ url_for('cargo.cargo_detail', cargo_id=bill.cargo.id) }}" class="text-decoration-none">
+                        {{ bill.cargo.main_awb }}
+                    </a>
+                </td>
+                <td>{{ bill.supplier_name }}</td>
+                <td>
+                    <span class="badge bg-secondary">{{ bill.category }}</span>
+                </td>
+                <td>{{ "%.2f"|format(bill.amount) }} {{ bill.currency }}</td>
+                <td>
+                    {% if bill.payment_status == 'Paid' %}
+                        <span class="badge bg-success">{{ bill.payment_status }}</span>
+                    {% elif bill.payment_status == 'Unpaid' %}
+                        <span class="badge bg-danger">{{ bill.payment_status }}</span>
+                    {% else %}
+                        <span class="badge bg-warning">{{ bill.payment_status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ bill.uploaded_by.username if bill.uploaded_by else 'Unknown' }}</td>
+                <td>{{ format_datetime_with_timezone(bill.uploaded_at) }}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a href="{{ url_for('bills.list_bills', cargo_id=bill.cargo.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> {{ _('View') }}
+                        </a>
+                        {% if bill.payment_status == 'Unpaid' %}
+                        <button class="btn btn-sm btn-outline-success" onclick="markAsPaid({{ bill.id }})">
+                            <i class="bi bi-check"></i> {{ _('Mark Paid') }}
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center text-muted">{{ _('No bills found') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function applyFilters() {
+    const status = document.getElementById('statusFilter').value;
+    const category = document.getElementById('categoryFilter').value;
+    const mawb = document.getElementById('mawbFilter').value;
+    
+    let url = '{{ url_for("bills.bills_list") }}?';
+    const params = [];
+    
+    if (status && status !== 'All') {
+        params.push('status=' + encodeURIComponent(status));
+    }
+    if (category && category !== 'All') {
+        params.push('category=' + encodeURIComponent(category));
+    }
+    if (mawb) {
+        params.push('mawb=' + encodeURIComponent(mawb));
+    }
+    
+    if (params.length > 0) {
+        url += params.join('&');
+    }
+    
+    window.location.href = url;
+}
+
+function markAsPaid(billId) {
+    if (confirm('{{ _("Mark this bill as paid?") }}')) {
+        // TODO: Implement mark as paid functionality
+        alert('{{ _("Mark as paid functionality will be implemented") }}');
+    }
+}
+</script>
+{% endblock %} 

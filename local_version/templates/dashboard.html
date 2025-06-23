@@ -1,0 +1,1097 @@
+{% extends "layout.html" %}
+
+{% macro format_date_tz(dt) %}
+    {% if dt %}
+        {{ format_date_with_timezone(dt) }}
+    {% else %}
+        &mdash;
+    {% endif %}
+{% endmacro %}
+
+{% block content %}
+<style>
+/* Two-wrapper CSS trick to fix dropdown clipping */
+.outer-wrapper {
+    position: relative;
+    overflow: visible;
+}
+
+.scroll-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+
+.dashboard-table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dashboard-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.dashboard-table td, .dashboard-table th {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    position: relative;
+}
+
+.dashboard-table th.eta, .dashboard-table td.eta,
+.dashboard-table th.lfd, .dashboard-table td.lfd,
+.dashboard-table th.timeleft, .dashboard-table td.timeleft {
+    min-width: 120px;
+}
+
+/* Ensure the actions column has enough space */
+.dashboard-table td:nth-child(2) {
+    min-width: 100px;
+    overflow: visible;
+}
+
+/* Dropdown positioning - now handled by JavaScript */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    display: none;
+    background-color: white;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    min-width: 160px;
+    padding: 0.5rem 0;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+</style>
+<script>
+// Define the function at global scope
+window.handleBatchEditSubmit = function() {
+    console.log('handleBatchEditSubmit function called'); // Debug log
+    
+    const batchEditForm = document.getElementById('batchEditForm');
+    if (!batchEditForm) {
+        console.error('Batch edit form not found!');
+        alert('Form not found!');
+        return;
+    }
+
+    const formData = new FormData(batchEditForm);
+
+    fetch('{{ url_for("cargo.batch_edit") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show changes summary
+            const changesSummary = document.getElementById('changesSummary');
+            let summaryHTML = '<h6>Changes to be made:</h6><ul>';
+            
+            data.changes.forEach(change => {
+                summaryHTML += `<li><strong>MAWB ${change.mawb}:</strong><ul>`;
+                change.changes.forEach(changeDetail => {
+                    // Split the change detail to highlight the new value in red
+                    const parts = changeDetail.split(' → ');
+                    if (parts.length === 2) {
+                        const oldValue = parts[0].split(': ')[1];
+                        const newValue = parts[1];
+                        const fieldName = parts[0].split(': ')[0];
+                        summaryHTML += `<li>${fieldName}: ${oldValue} → <span style="color: red; font-weight: bold;">${newValue}</span></li>`;
+                    } else {
+                        summaryHTML += `<li>${changeDetail}</li>`;
+                    }
+                });
+                summaryHTML += '</ul></li>';
+            });
+            
+            summaryHTML += '</ul>';
+            changesSummary.innerHTML = summaryHTML;
+            
+            // Hide batch edit modal and show confirmation modal
+            const batchEditModalInstance = bootstrap.Modal.getInstance(batchEditModal);
+            if (batchEditModalInstance) {
+                batchEditModalInstance.hide();
+            }
+            
+            // Show confirmation modal
+            const confirmModalInstance = new bootstrap.Modal(batchEditConfirmModal);
+            confirmModalInstance.show();
+            
+            // Store form data for final submission
+            window.pendingBatchEditData = formData;
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the batch edit.');
+    });
+};
+
+// Define the confirmation function
+window.confirmBatchEdit = function() {
+    if (window.pendingBatchEditData) {
+        // Submit the form data to actually save changes
+        fetch('{{ url_for("cargo.batch_edit_confirm") }}', {
+            method: 'POST',
+            body: window.pendingBatchEditData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close confirmation modal and reload page
+                const confirmModalInstance = bootstrap.Modal.getInstance(batchEditConfirmModal);
+                confirmModalInstance.hide();
+                alert('Changes saved successfully!');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving changes.');
+        });
+    }
+};
+
+// Function to highlight changed fields
+function highlightChange(element) {
+    const originalValue = element.getAttribute('data-original');
+    const currentValue = element.value;
+    
+    if (originalValue !== currentValue) {
+        element.style.backgroundColor = '#ffebee'; // Light red background
+        element.style.borderColor = '#f44336'; // Red border
+    } else {
+        element.style.backgroundColor = ''; // Reset to default
+        element.style.borderColor = ''; // Reset to default
+    }
+}
+
+// Set progress bar widths from data attributes
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar[data-width]');
+    progressBars.forEach(function(bar) {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+    
+    // Add event listeners for delete cargo buttons
+    const deleteButtons = document.querySelectorAll('.delete-cargo-btn');
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const cargoId = this.getAttribute('data-cargo-id');
+            const cargoMawb = this.getAttribute('data-cargo-mawb');
+            confirmDeleteCargo(cargoId, cargoMawb);
+        });
+    });
+    
+    // Simple z-index fix for dropdowns - based on the tutorial
+    function ensureDropdownsOnTop() {
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+        dropdownMenus.forEach(function(menu) {
+            menu.style.zIndex = '99999';
+        });
+    }
+    
+    // Apply fix immediately
+    ensureDropdownsOnTop();
+    
+    // Apply fix when dropdowns are shown
+    document.addEventListener('show.bs.dropdown', function(e) {
+        setTimeout(ensureDropdownsOnTop, 10);
+    });
+    
+    // Apply fix when dropdowns are hidden
+    document.addEventListener('hide.bs.dropdown', function(e) {
+        setTimeout(ensureDropdownsOnTop, 10);
+    });
+});
+
+// Manual "move-to-body" dropdown fix to prevent clipping
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.dropdown').forEach(drop => {
+        const btn = drop.querySelector('.dropdown-toggle');
+        const menu = drop.querySelector('.dropdown-menu');
+
+        btn.addEventListener('show.bs.dropdown', e => {
+            // 1) Remember original parent for later
+            drop._origParent = menu.parentNode;
+
+            // 2) Move menu to body
+            document.body.appendChild(menu);
+
+            // 3) Position it just under the button
+            const rect = btn.getBoundingClientRect();
+            menu.style.position = 'absolute';
+            menu.style.top = (rect.bottom + window.scrollY) + 'px';
+            menu.style.left = (rect.left + window.scrollX) + 'px';
+            menu.style.zIndex = 99999;
+        });
+
+        btn.addEventListener('hide.bs.dropdown', e => {
+            // Move menu back into the table cell so DOM stays sane
+            if (drop._origParent) {
+                drop._origParent.appendChild(menu);
+                menu.style.position = '';
+                menu.style.top = '';
+                menu.style.left = '';
+                menu.style.zIndex = '';
+            }
+        });
+    });
+});
+
+// Function to change sort order
+function changeSort(sortType) {
+    const url = new URL(window.location);
+    url.searchParams.set('sort', sortType);
+    
+    // Preserve timezone parameter if it exists
+    const timezoneParam = url.searchParams.get('timezone');
+    if (timezoneParam) {
+        url.searchParams.set('timezone', timezoneParam);
+    }
+    
+    window.location.href = url.toString();
+}
+
+// Function to confirm cargo deletion
+function confirmDeleteCargo(cargoId, cargoMainAwb) {
+    if (confirm(`Are you sure you want to delete MAWB ${cargoMainAwb}? This action cannot be undone.`)) {
+        window.location.href = `/cargo/delete/${cargoId}`;
+    }
+}
+</script>
+
+<h1>{{ _('Dashboard') }}</h1>
+
+<!-- Add MAWB Button -->
+<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addMawbModal">
+    {{ _('Add MAWB') }}
+</button>
+
+<h2>{{ _('Current Cargo List') }} 
+    <div class="d-inline-flex align-items-center ms-2">
+        <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#batchEditModal">
+            {{ _('Batch Edit') }}
+        </button>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                {{ _('Sort by') }}: 
+                <span id="currentSortText">
+                    {% if current_sort == 'date_added' %}
+                        {{ _('Date Added') }}
+                    {% elif current_sort == 'eta_soonest' %}
+                        {{ _('ETA (Soonest)') }}
+                    {% elif current_sort == 'eta_latest' %}
+                        {{ _('ETA (Latest)') }}
+                    {% elif current_sort == 'lfd_overdue' %}
+                        {{ _('LFD (Overdue)') }}
+                    {% endif %}
+                </span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                <li><a class="dropdown-item {% if current_sort == 'date_added' %}active{% endif %}" href="#" onclick="changeSort('date_added')">{{ _('Date Added') }} ({{ _('Newest first') }})</a></li>
+                <li><a class="dropdown-item {% if current_sort == 'eta_soonest' %}active{% endif %}" href="#" onclick="changeSort('eta_soonest')">{{ _('ETA (Soonest)') }} ({{ _('Upcoming first') }})</a></li>
+                <li><a class="dropdown-item {% if current_sort == 'eta_latest' %}active{% endif %}" href="#" onclick="changeSort('eta_latest')">{{ _('ETA (Latest)') }} ({{ _('Latest first') }})</a></li>
+                <li><a class="dropdown-item {% if current_sort == 'lfd_overdue' %}active{% endif %}" href="#" onclick="changeSort('lfd_overdue')">{{ _('LFD (Overdue)') }} ({{ _('Most overdue first') }})</a></li>
+            </ul>
+        </div>
+    </div>
+</h2>
+
+<!-- Status Tabs -->
+<ul class="nav nav-tabs mb-3" id="statusTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+            {{ _('All') }} ({{ cargos|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="in-progress-tab" data-bs-toggle="tab" data-bs-target="#in-progress" type="button" role="tab">
+            {{ _('In Progress') }} ({{ cargos|selectattr('status', 'equalto', 'In Progress')|list|length }})
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+            {{ _('Completed') }} ({{ cargos|selectattr('status', 'equalto', 'Completed')|list|length }})
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="statusTabContent">
+    <!-- All Cargo Tab -->
+    <div class="tab-pane fade show active" id="all" role="tabpanel">
+        <div class="outer-wrapper">
+            <div class="scroll-wrapper">
+                <table class="table table-bordered dashboard-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('Main AWB') }}</th>
+                        <th>{{ _('Flight No.') }}</th>
+                        <th class="eta">{{ _('ETA') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th class="lfd">{{ _('LFD (Last Free Day)') }}</th>
+                        <th class="timeleft">{{ _('Time until LFD') }}</th>
+                        <th>{{ _('Responsibles') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for cargo in cargos %}
+                    <tr>
+                        <td>
+                            <button class="btn btn-link p-0 text-decoration-none" type="button" 
+                                    data-bs-toggle="modal" data-bs-target="#actionsModal" 
+                                    data-cargo-id="{{ cargo.id }}" data-cargo-mawb="{{ cargo.main_awb }}">
+                                {{ cargo.main_awb }}
+                            </button>
+                        </td>
+                        <td>
+                            {% if cargo.flight_no %}
+                                {{ cargo.flight_no }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.eta %}
+                                {{ format_date_with_timezone(cargo.eta) }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.status %}
+                                {{ cargo.status }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.lfd_date %}
+                                {{ format_date_with_timezone(cargo.lfd_date) }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.lfd_date %}
+                                {% set now = get_current_time() %}
+                                {% set lfd_end = cargo.lfd_date.replace(hour=23, minute=59, second=59) %}
+                                {% if lfd_end.tzinfo is none %}
+                                    {% set lfd_end = lfd_end.replace(tzinfo=now.tzinfo) %}
+                                {% endif %}
+                                {% set delta = lfd_end - now %}
+                                {% set days = delta.days %}
+                                {% set hours = delta.seconds // 3600 %}
+                                {% if days < 0 or (days == 0 and hours < 0) %}
+                                    <span class="text-danger">{{ abs(days) }}d {{ abs(hours) }}h overdue</span>
+                                {% else %}
+                                    <span class="text-warning">{{ days }}d {{ hours }}h</span>
+                                {% endif %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.responsibles %}
+                                {% for u in cargo.responsibles %}
+                                    {{ u.username }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- In Progress Tab -->
+    <div class="tab-pane fade" id="in-progress" role="tabpanel">
+        <div class="outer-wrapper">
+            <div class="scroll-wrapper">
+                <table class="table table-bordered dashboard-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('Main AWB') }}</th>
+                        <th>{{ _('Flight No.') }}</th>
+                        <th class="eta">{{ _('ETA') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th class="lfd">{{ _('LFD (Last Free Day)') }}</th>
+                        <th class="timeleft">{{ _('Time til LFD') }}</th>
+                        <th>{{ _('Responsibles') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for cargo in cargos %}
+                    {% if cargo.status == 'In Progress' %}
+                    <tr>
+                        <td>
+                            <button class="btn btn-link p-0 text-decoration-none" type="button" 
+                                    data-bs-toggle="modal" data-bs-target="#actionsModal" 
+                                    data-cargo-id="{{ cargo.id }}" data-cargo-mawb="{{ cargo.main_awb }}">
+                                {{ cargo.main_awb }}
+                            </button>
+                        </td>
+                        <td>
+                            {% if cargo.flight_no %}
+                                {{ cargo.flight_no }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.eta %}
+                                {{ format_date_with_timezone(cargo.eta) }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.status %}
+                                {{ cargo.status }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.lfd_date %}
+                                {{ format_date_with_timezone(cargo.lfd_date) }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.lfd_date %}
+                                {% set now = get_current_time() %}
+                                {% set lfd_end = cargo.lfd_date.replace(hour=23, minute=59, second=59) %}
+                                {% if lfd_end.tzinfo is none %}
+                                    {% set lfd_end = lfd_end.replace(tzinfo=now.tzinfo) %}
+                                {% endif %}
+                                {% set delta = lfd_end - now %}
+                                {% set days = delta.days %}
+                                {% set hours = delta.seconds // 3600 %}
+                                {% if days < 0 or (days == 0 and hours < 0) %}
+                                    <span class="text-danger">{{ abs(days) }}d {{ abs(hours) }}h overdue</span>
+                                {% else %}
+                                    <span class="text-warning">{{ days }}d {{ hours }}h</span>
+                                {% endif %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.responsibles %}
+                                {% for u in cargo.responsibles %}
+                                    {{ u.username }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Tab -->
+    <div class="tab-pane fade" id="completed" role="tabpanel">
+        <div class="outer-wrapper">
+            <div class="scroll-wrapper">
+                <table class="table table-bordered dashboard-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('Main AWB') }}</th>
+                        <th>{{ _('Flight No.') }}</th>
+                        <th class="eta">{{ _('ETA') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th class="lfd">{{ _('LFD (Last Free Day)') }}</th>
+                        <th class="timeleft">{{ _('Time til LFD') }}</th>
+                        <th>{{ _('Responsibles') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for cargo in cargos %}
+                    {% if cargo.status == 'Completed' %}
+                    <tr>
+                        <td>
+                            <button class="btn btn-link p-0 text-decoration-none" type="button" 
+                                    data-bs-toggle="modal" data-bs-target="#actionsModal" 
+                                    data-cargo-id="{{ cargo.id }}" data-cargo-mawb="{{ cargo.main_awb }}">
+                                {{ cargo.main_awb }}
+                            </button>
+                        </td>
+                        <td>
+                            {% if cargo.flight_no %}
+                                {{ cargo.flight_no }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.eta %}
+                                {{ format_date_with_timezone(cargo.eta) }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-success">Completed</span>
+                        </td>
+                        <td>
+                            {% if cargo.lfd_date %}
+                                {{ format_date_with_timezone(cargo.lfd_date) }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.lfd_date %}
+                                {% set now = get_current_time() %}
+                                {% set lfd_end = cargo.lfd_date.replace(hour=23, minute=59, second=59) %}
+                                {% if lfd_end.tzinfo is none %}
+                                    {% set lfd_end = lfd_end.replace(tzinfo=now.tzinfo) %}
+                                {% endif %}
+                                {% set delta = lfd_end - now %}
+                                {% set days = delta.days %}
+                                {% set hours = delta.seconds // 3600 %}
+                                {% if days < 0 or (days == 0 and hours < 0) %}
+                                    {% if cargo.status != 'Completed' %}
+                                        <span class="text-danger">{{ abs(days) }}d {{ abs(hours) }}h overdue</span>
+                                    {% else %}
+                                        {{ days }}d {{ hours }}h
+                                    {% endif %}
+                                {% else %}
+                                    {{ days }}d {{ hours }}h
+                                {% endif %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if cargo.responsibles %}
+                                {% for u in cargo.responsibles %}
+                                    {{ u.username }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2>{{ _('Today\'s Alerts') }}</h2>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">{{ _('Cargo Approaching LFD') }}</h6>
+            </div>
+            <div class="card-body">
+                {% set lfd_alerts = [] %}
+                {% for cargo in cargos %}
+                    {% if cargo.eta and cargo.lfd_date %}
+                        {% set delta = cargo.lfd_date - cargo.eta %}
+                        {% if delta.days <= 3 and delta.days > 0 %}
+                            {% set _ = lfd_alerts.append(cargo) %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if lfd_alerts %}
+                    <ul class="list-unstyled mb-0">
+                    {% for cargo in lfd_alerts %}
+                        {% set delta = cargo.lfd_date - cargo.eta %}
+                        <li class="mb-2">
+                            <strong>{{ cargo.main_awb }}</strong><br>
+                            <small class="text-muted">{{ delta.days }} {{ _('days left') }}</small>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">{{ _('No urgent LFD alerts') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">{{ _('Unpaid Bills') }}</h6>
+            </div>
+            <div class="card-body">
+                {% set unpaid_bills = [] %}
+                {% for cargo in cargos %}
+                    {% for bill in cargo.bills %}
+                        {% if bill.payment_status == 'Unpaid' %}
+                            {% set _ = unpaid_bills.append(bill) %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                
+                {% if unpaid_bills %}
+                    <ul class="list-unstyled mb-0">
+                    {% for bill in unpaid_bills[:5] %}
+                        <li class="mb-2">
+                            <strong>{{ bill.cargo.main_awb }}</strong><br>
+                            <small class="text-muted">{{ bill.supplier_name }} - {{ bill.amount }} {{ bill.currency }}</small>
+                        </li>
+                    {% endfor %}
+                    {% if unpaid_bills|length > 5 %}
+                        <li class="text-muted">{{ _('... and') }} {{ unpaid_bills|length - 5 }} {{ _('more') }}</li>
+                    {% endif %}
+</ul>
+                {% else %}
+                    <p class="text-muted mb-0">{{ _('No unpaid bills') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">{{ _('Pending Actions') }}</h6>
+            </div>
+            <div class="card-body">
+                {% set pending_cargos = [] %}
+                {% for cargo in cargos %}
+                    {% if cargo.status == 'In Progress' %}
+                        {% set _ = pending_cargos.append(cargo) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pending_cargos %}
+                    <ul class="list-unstyled mb-0">
+                    {% for cargo in pending_cargos[:5] %}
+                        <li class="mb-2">
+                            <strong>{{ cargo.main_awb }}</strong><br>
+                            <small class="text-muted">{{ _('Awaiting action') }}</small>
+                        </li>
+                    {% endfor %}
+                    {% if pending_cargos|length > 5 %}
+                        <li class="text-muted">{{ _('... and') }} {{ pending_cargos|length - 5 }} {{ _('more') }}</li>
+                    {% endif %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-0">{{ _('No pending actions') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2>{{ _('Status Distribution Chart') }}</h2>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">{{ _('Cargo Status Overview') }}</h6>
+            </div>
+            <div class="card-body">
+                {% set status_counts = {} %}
+                {% for cargo in cargos %}
+                    {% set status = cargo.status or 'No Status' %}
+                    {% if status in status_counts %}
+                        {% set _ = status_counts.update({status: status_counts[status] + 1}) %}
+                    {% else %}
+                        {% set _ = status_counts.update({status: 1}) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if status_counts %}
+                    <div class="row">
+                    {% for status, count in status_counts.items() %}
+                        <div class="col-6 mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge {% if status == 'In Progress' %}bg-warning{% elif status == 'Completed' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ status }}
+                                </span>
+                                <span class="fw-bold">{{ count }}</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 8px;">
+                                <div class="progress-bar {% if status == 'In Progress' %}bg-warning{% elif status == 'Completed' %}bg-success{% else %}bg-secondary{% endif %}" 
+                                     data-width="{{ (count / cargos|length * 100)|round(1) }}"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">{{ _('No cargo data available') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">{{ _('Quick Statistics') }}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-primary mb-1">{{ cargos|length }}</h4>
+                            <small class="text-muted">{{ _('Total Cargo') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-warning mb-1">
+                                {% set in_progress = cargos|selectattr('status', 'equalto', 'In Progress')|list|length %}
+                                {{ in_progress }}
+                            </h4>
+                            <small class="text-muted">{{ _('In Progress') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success mb-1">
+                                {% set completed = cargos|selectattr('status', 'equalto', 'Completed')|list|length %}
+                                {{ completed }}
+                            </h4>
+                            <small class="text-muted">{{ _('Completed') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-danger mb-1">
+                                {% set unpaid_count = 0 %}
+                                {% for cargo in cargos %}
+                                    {% for bill in cargo.bills %}
+                                        {% if bill.payment_status == 'Unpaid' %}
+                                            {% set unpaid_count = unpaid_count + 1 %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                                {{ unpaid_count }}
+                            </h4>
+                            <small class="text-muted">{{ _('Unpaid Bills') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add MAWB Modal -->
+<div class="modal fade" id="addMawbModal" tabindex="-1" aria-labelledby="addMawbModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('cargo.cargo_create') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addMawbModalLabel">{{ _('Add MAWB') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="main_awb" class="form-label">{{ _('Main AWB') }}</label>
+            <input type="text" class="form-control" id="main_awb" name="main_awb" required>
+          </div>
+          <div class="mb-3">
+            <label for="flight_no" class="form-label">{{ _('Flight No.') }}</label>
+            <input type="text" class="form-control" id="flight_no" name="flight_no">
+          </div>
+          <div class="mb-3">
+            <label for="customer_name" class="form-label">{{ _('Customer') }}</label>
+            <input type="text" class="form-control" id="customer_name" name="customer_name">
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <label for="eta" class="form-label me-2 mb-0">{{ _('ETA') }}</label>
+            <input type="date" class="form-control me-2" id="eta" name="eta">
+            <select class="form-select form-select-sm" name="eta_timezone" style="width: auto; min-width: 120px;">
+              <option value="America/Los_Angeles" {% if get_user_timezone() == 'America/Los_Angeles' %}selected{% endif %}>Los Angeles (PST/PDT)</option>
+              <option value="America/New_York" {% if get_user_timezone() == 'America/New_York' %}selected{% endif %}>New York (EST/EDT)</option>
+              <option value="America/Chicago" {% if get_user_timezone() == 'America/Chicago' %}selected{% endif %}>Chicago (CST/CDT)</option>
+              <option value="America/Denver" {% if get_user_timezone() == 'America/Denver' %}selected{% endif %}>Denver (MST/MDT)</option>
+              <option value="UTC" {% if get_user_timezone() == 'UTC' %}selected{% endif %}>UTC</option>
+              <option value="Asia/Shanghai" {% if get_user_timezone() == 'Asia/Shanghai' %}selected{% endif %}>Shanghai (CST)</option>
+              <option value="Asia/Tokyo" {% if get_user_timezone() == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST)</option>
+              <option value="Europe/London" {% if get_user_timezone() == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
+              <option value="Europe/Paris" {% if get_user_timezone() == 'Europe/Paris' %}selected{% endif %}>Paris (CET/CEST)</option>
+            </select>
+          </div>
+          <div class="mb-3 d-flex align-items-center">
+            <label for="lfd_date" class="form-label me-2 mb-0">{{ _('LFD') }}</label>
+            <input type="date" class="form-control me-2" id="lfd_date" name="lfd_date">
+            <select class="form-select form-select-sm" name="lfd_timezone" style="width: auto; min-width: 120px;">
+              <option value="America/Los_Angeles" {% if get_user_timezone() == 'America/Los_Angeles' %}selected{% endif %}>Los Angeles (PST/PDT)</option>
+              <option value="America/New_York" {% if get_user_timezone() == 'America/New_York' %}selected{% endif %}>New York (EST/EDT)</option>
+              <option value="America/Chicago" {% if get_user_timezone() == 'America/Chicago' %}selected{% endif %}>Chicago (CST/CDT)</option>
+              <option value="America/Denver" {% if get_user_timezone() == 'America/Denver' %}selected{% endif %}>Denver (MST/MDT)</option>
+              <option value="UTC" {% if get_user_timezone() == 'UTC' %}selected{% endif %}>UTC</option>
+              <option value="Asia/Shanghai" {% if get_user_timezone() == 'Asia/Shanghai' %}selected{% endif %}>Shanghai (CST)</option>
+              <option value="Asia/Tokyo" {% if get_user_timezone() == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST)</option>
+              <option value="Europe/London" {% if get_user_timezone() == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
+              <option value="Europe/Paris" {% if get_user_timezone() == 'Europe/Paris' %}selected{% endif %}>Paris (CET/CEST)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="status" class="form-label">{{ _('Status') }}</label>
+            <select class="form-select" id="status" name="status">
+              <option value="In Progress">{{ _('In Progress') }}</option>
+              <option value="Completed">{{ _('Completed') }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+          <button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Batch Edit Modal -->
+<div class="modal fade" id="batchEditModal" tabindex="-1" aria-labelledby="batchEditModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('cargo.batch_edit') }}" id="batchEditForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="batchEditModalLabel">{{ _('Batch Edit Cargo') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>{{ _('MAWB') }}</th>
+                  <th>{{ _('Flight No.') }}</th>
+                  <th>{{ _('Customer') }}</th>
+                  <th>{{ _('ETA') }}</th>
+                  <th>{{ _('LFD') }}</th>
+                  <th>{{ _('Time Left') }}</th>
+                  <th>{{ _('Status') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for cargo in cargos %}
+                <tr>
+                  <td>{{ cargo.main_awb }}</td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" name="flight_no_{{ cargo.id }}" 
+                           value="{{ cargo.flight_no or '' }}" 
+                           data-original="{{ cargo.flight_no or '' }}"
+                           onchange="highlightChange(this)" oninput="highlightChange(this)">
+                    {% if not cargo.flight_no %}<small class="text-muted">—</small>{% endif %}
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" name="customer_name_{{ cargo.id }}" 
+                           value="{{ cargo.customer_name or '' }}" 
+                           data-original="{{ cargo.customer_name or '' }}"
+                           onchange="highlightChange(this)" oninput="highlightChange(this)">
+                    {% if not cargo.customer_name %}<small class="text-muted">—</small>{% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <input type="date" class="form-control form-control-sm me-1" name="eta_{{ cargo.id }}" 
+                             value="{{ cargo.eta.strftime('%Y-%m-%d') if cargo.eta else '' }}" 
+                             data-original="{{ cargo.eta.strftime('%Y-%m-%d') if cargo.eta else '' }}"
+                             onchange="highlightChange(this)" oninput="highlightChange(this)" style="width: 120px;">
+                      <select class="form-select form-select-sm" name="eta_timezone_{{ cargo.id }}" style="font-size: 0.7rem; width: 80px;">
+                        <option value="America/Los_Angeles" {% if get_user_timezone() == 'America/Los_Angeles' %}selected{% endif %}>PST</option>
+                        <option value="America/New_York" {% if get_user_timezone() == 'America/New_York' %}selected{% endif %}>EST</option>
+                        <option value="America/Chicago" {% if get_user_timezone() == 'America/Chicago' %}selected{% endif %}>CST</option>
+                        <option value="America/Denver" {% if get_user_timezone() == 'America/Denver' %}selected{% endif %}>MST</option>
+                        <option value="UTC" {% if get_user_timezone() == 'UTC' %}selected{% endif %}>UTC</option>
+                        <option value="Asia/Shanghai" {% if get_user_timezone() == 'Asia/Shanghai' %}selected{% endif %}>CST</option>
+                        <option value="Asia/Tokyo" {% if get_user_timezone() == 'Asia/Tokyo' %}selected{% endif %}>JST</option>
+                        <option value="Europe/London" {% if get_user_timezone() == 'Europe/London' %}selected{% endif %}>GMT</option>
+                        <option value="Europe/Paris" {% if get_user_timezone() == 'Europe/Paris' %}selected{% endif %}>CET</option>
+                      </select>
+                    </div>
+                    {% if not cargo.eta %}<small class="text-muted">—</small>{% endif %}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <input type="date" class="form-control form-control-sm me-1" name="lfd_date_{{ cargo.id }}" 
+                             value="{{ cargo.lfd_date.strftime('%Y-%m-%d') if cargo.lfd_date else '' }}" 
+                             data-original="{{ cargo.lfd_date.strftime('%Y-%m-%d') if cargo.lfd_date else '' }}"
+                             onchange="highlightChange(this)" oninput="highlightChange(this)" style="width: 120px;">
+                      <select class="form-select form-select-sm" name="lfd_timezone_{{ cargo.id }}" style="font-size: 0.7rem; width: 80px;">
+                        <option value="America/Los_Angeles" {% if get_user_timezone() == 'America/Los_Angeles' %}selected{% endif %}>PST</option>
+                        <option value="America/New_York" {% if get_user_timezone() == 'America/New_York' %}selected{% endif %}>EST</option>
+                        <option value="America/Chicago" {% if get_user_timezone() == 'America/Chicago' %}selected{% endif %}>CST</option>
+                        <option value="America/Denver" {% if get_user_timezone() == 'America/Denver' %}selected{% endif %}>MST</option>
+                        <option value="UTC" {% if get_user_timezone() == 'UTC' %}selected{% endif %}>UTC</option>
+                        <option value="Asia/Shanghai" {% if get_user_timezone() == 'Asia/Shanghai' %}selected{% endif %}>CST</option>
+                        <option value="Asia/Tokyo" {% if get_user_timezone() == 'Asia/Tokyo' %}selected{% endif %}>JST</option>
+                        <option value="Europe/London" {% if get_user_timezone() == 'Europe/London' %}selected{% endif %}>GMT</option>
+                        <option value="Europe/Paris" {% if get_user_timezone() == 'Europe/Paris' %}selected{% endif %}>CET</option>
+                      </select>
+                    </div>
+                    {% if not cargo.lfd_date %}<small class="text-muted">—</small>{% endif %}
+                  </td>
+                  <td>
+                    <select class="form-select form-select-sm" name="status_{{ cargo.id }}" 
+                            data-original="{{ cargo.status or '' }}"
+                            onchange="highlightChange(this)">
+                      <option value="In Progress" {{ 'selected' if cargo.status == 'In Progress' else '' }}>{{ _('In Progress') }}</option>
+                      <option value="Completed" {{ 'selected' if cargo.status == 'Completed' else '' }}>{{ _('Completed') }}</option>
+                    </select>
+                    {% if not cargo.status %}<small class="text-muted">—</small>{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+          <button type="button" class="btn btn-primary" onclick="handleBatchEditSubmit()">{{ _('Review Changes') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Batch Edit Confirmation Modal -->
+<div class="modal fade" id="batchEditConfirmModal" tabindex="-1" aria-labelledby="batchEditConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="batchEditConfirmModalLabel">{{ _('Confirm Changes') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <div id="changesSummary">
+          <!-- Changes will be populated here by JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+        <button type="button" class="btn btn-primary" onclick="confirmBatchEdit()">{{ _('Confirm') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions Modal -->
+<div class="modal fade" id="actionsModal" tabindex="-1" aria-labelledby="actionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="actionsModalLabel">{{ _('Actions for MAWB') }} <span id="modalMawb"></span></h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-2">{{ _('Cargo Management') }}</h6>
+                        <div class="d-grid gap-1 mb-3">
+                            <a class="btn btn-outline-primary btn-sm" id="viewDetailsBtn" href="#">{{ _('View Details') }}</a>
+                            <a class="btn btn-outline-primary btn-sm" id="editCargoBtn" href="#">{{ _('Edit Cargo') }}</a>
+                            <a class="btn btn-outline-primary btn-sm" id="recordEventBtn" href="#">{{ _('Record Event') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-2">{{ _('Documents') }}</h6>
+                        <div class="d-grid gap-1 mb-3">
+                            <a class="btn btn-outline-info btn-sm" id="viewAttachmentsBtn" href="#">{{ _('View Attachments') }}</a>
+                            <a class="btn btn-outline-info btn-sm" id="uploadAttachmentBtn" href="#">{{ _('Upload Attachment') }}</a>
+                            <a class="btn btn-outline-info btn-sm" id="viewBillsBtn" href="#">{{ _('View Bills') }}</a>
+                            <a class="btn btn-outline-info btn-sm" id="addInvoiceBtn" href="#">{{ _('Add Invoice') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-2">{{ _('Communication') }}</h6>
+                        <div class="d-grid gap-1 mb-3">
+                            <a class="btn btn-outline-success btn-sm" id="sendEmailBtn" href="#">{{ _('Send Email') }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-2">{{ _('Danger Zone') }}</h6>
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-outline-danger btn-sm" id="deleteCargoBtn" type="button">{{ _('Delete MAWB') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Actions modal functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const actionsModal = document.getElementById('actionsModal');
+    if (actionsModal) {
+        actionsModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const cargoId = button.getAttribute('data-cargo-id');
+            const cargoMawb = button.getAttribute('data-cargo-mawb');
+            
+            // Update modal title
+            document.getElementById('modalMawb').textContent = cargoMawb;
+            
+            // Update all button URLs
+            document.getElementById('viewDetailsBtn').href = `/cargo/${cargoId}`;
+            document.getElementById('editCargoBtn').href = `/cargo/${cargoId}/edit`;
+            document.getElementById('recordEventBtn').href = `/cargo/${cargoId}/record_event`;
+            document.getElementById('viewAttachmentsBtn').href = `/attachments/${cargoId}`;
+            document.getElementById('uploadAttachmentBtn').href = `/attachments/${cargoId}?upload=true`;
+            document.getElementById('viewBillsBtn').href = `/bills/${cargoId}`;
+            document.getElementById('addInvoiceBtn').href = `/bills/${cargoId}?add=true`;
+            document.getElementById('sendEmailBtn').href = `/email/send/${cargoId}`;
+            
+            // Set up delete button
+            document.getElementById('deleteCargoBtn').onclick = function() {
+                if (confirm(`Are you sure you want to delete MAWB ${cargoMawb}? This action cannot be undone.`)) {
+                    window.location.href = `/cargo/delete/${cargoId}`;
+                }
+            };
+        });
+    }
+});
+</script>
+
+{% endblock %}
