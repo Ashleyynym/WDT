@@ -14,24 +14,94 @@ A comprehensive end-to-end air freight operation management system for WDT Suppl
 
 ## Quick Start
 
-1. **Set up a virtual environment (recommended):**
-   ```bat
+### 🚀 Super Easy Setup (Recommended)
+
+**One command setup - no manual copying needed!**
+```bash
+python setup.py
+```
+
+**One command to run the application:**
+```bash
+python run.py
+```
+
+That's it! The setup script will:
+- ✅ Create virtual environment automatically
+- ✅ Install all dependencies
+- ✅ Create activation scripts for you
+- ✅ Handle all platform differences
+
+### 🔧 Alternative Setup Options
+
+#### Option 1: Standard Virtual Environment
+
+1. **Create virtual environment:**
+   ```bash
    python -m venv venv
+   ```
+
+2. **Activate virtual environment:**
+   
+   **On Windows:**
+   ```cmd
+   venv\Scripts\activate
+   ```
+   
+   **On macOS/Linux:**
+   ```bash
    source venv/bin/activate
    ```
-   > On Windows, use:
-   > ```bash
-   > python3 -m venv venv
-   > venv\Scripts\activate
-   > ```
 
-2. **Install dependencies:**
+3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run the application:**
+#### Option 2: One-Command Setup (Cross-Platform)
+
+If you have `conda` installed:
+```bash
+conda create -n wdt-env python=3.9
+conda activate wdt-env
+pip install -r requirements.txt
+```
+
+#### Option 3: Using pipenv (Cross-Platform)
+
+```bash
+pip install pipenv
+pipenv install
+pipenv shell
+```
+
+### 🎯 Running the Application
+
+**After setup, you have multiple ways to run the app:**
+
+1. **One-click launcher (easiest):**
    ```bash
+   python run.py
+   ```
+
+2. **Using the activation script:**
+   ```bash
+   # Windows
+   activate.bat
+   
+   # macOS/Linux
+   ./activate.sh
+   ```
+
+3. **Manual activation:**
+   ```bash
+   # Windows
+   venv\Scripts\activate
+   
+   # macOS/Linux
+   source venv/bin/activate
+   
+   # Then run
    python app.py
    ```
 
