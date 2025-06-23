@@ -21,16 +21,48 @@ A comprehensive end-to-end air freight operation management system for WDT Suppl
 python setup.py
 ```
 
-**One command to run the application:**
+**Multiple ways to run with automatic activation:**
+
+#### Option 1: Python Launcher (Cross-Platform)
 ```bash
 python run.py
 ```
 
-That's it! The setup script will:
-- ✅ Create virtual environment automatically
-- ✅ Install all dependencies
-- ✅ Create activation scripts for you
-- ✅ Handle all platform differences
+#### Option 2: One-Click Files
+- **Windows**: Double-click `start.bat`
+- **macOS/Linux**: Double-click `start.sh` or run `./start.sh`
+
+#### Option 3: Command Line (Cross-Platform)
+```bash
+# Windows
+start.bat
+
+# macOS/Linux
+./start.sh
+```
+
+**All methods automatically:**
+- ✅ **Activate virtual environment**
+- ✅ **Check and install dependencies**
+- ✅ **Start the Flask application**
+- ✅ **Open at http://localhost:5000**
+
+### 🔄 Database Sharing & Collaboration
+
+**For Team Members:**
+- The database (`wdt_supplychain.db`) is now included in the repository
+- **To get the latest database:** `git pull` will update both code and database
+- **To share your changes:** `git add . && git commit -m "message" && git push`
+
+**Database Updates:**
+- When you add cargo, upload files, or make changes, commit them to share
+- Your partner can pull the latest database with: `git pull origin main`
+- The database includes all cargo records, attachments, billing, and user data
+
+**Important Notes:**
+- ⚠️ **Don't run the app simultaneously** - only one person should use it at a time
+- 🔄 **Always pull before starting work** to get the latest data
+- 💾 **Commit your changes regularly** to keep the database synchronized
 
 ### 🔧 Alternative Setup Options
 
@@ -84,7 +116,11 @@ pipenv shell
    python run.py
    ```
 
-2. **Using the activation script:**
+2. **One-click files:**
+   - **Windows**: Double-click `start.bat`
+   - **macOS/Linux**: Double-click `start.sh` or run `./start.sh`
+
+3. **Using the activation script:**
    ```bash
    # Windows
    activate.bat
@@ -93,7 +129,7 @@ pipenv shell
    ./activate.sh
    ```
 
-3. **Manual activation:**
+4. **Manual activation:**
    ```bash
    # Windows
    venv\Scripts\activate
@@ -105,7 +141,7 @@ pipenv shell
    python app.py
    ```
 
-4. **Access the system at** `http://localhost:5000`
+5. **Access the system at** `http://localhost:5000`
 
 ## System Requirements
 
