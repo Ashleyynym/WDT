@@ -66,4 +66,10 @@ activate.sh
 .flaskenv
 
 # Uploads
-uploads/ 
+uploads/
+
+# Google Cloud Credentials (Sensitive - Never commit!)
+credentials.json
+*.json
+!package.json
+!babel.cfg 

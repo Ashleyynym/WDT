@@ -49,25 +49,43 @@ start.bat
 
 ## 🔄 Data Synchronization Options
 
-### Option A: Google Sheets Sync (Recommended - Free & Collaborative)
+### Option A: Google Sheets API Sync (Recommended - Professional)
 
 **Perfect for teams who want:**
-- ✅ **Free data sharing** (no database hosting costs)
-- ✅ **Non-technical users** can edit data directly
-- ✅ **Real-time collaboration** on data
-- ✅ **Clean Git repository** (no binary files)
+- ✅ **Real-time two-way sync** (app ↔ Google Sheets)
+- ✅ **Professional setup** with service account authentication
+- ✅ **Automatic updates** when you make changes in the app
+- ✅ **Secure credentials** with proper access control
+- ✅ **Free hosting** with Google Sheets
+
+**Setup:**
+1. **Follow [GOOGLE_CLOUD_SETUP.md](GOOGLE_CLOUD_SETUP.md)** for detailed setup instructions
+2. **Create Google Cloud Service Account** and download credentials
+3. **Share your Google Sheet** with the service account
+4. **Configure environment variables** in `.env`
+
+**Usage:**
+- **Manual sync**: `python google_sheets_sync.py`
+- **Auto sync on startup**: Set `SYNC_ON_STARTUP=true` in `.env`
+- **Scheduled sync**: Every 15 minutes (already configured)
+
+### Option B: CSV Export/Import (Simple - Manual)
+
+**For teams who prefer:**
+- ✅ **Simple setup** (no Google Cloud account needed)
+- ✅ **Manual control** over when to sync
+- ✅ **CSV file sharing** via email or file sharing
 
 **Setup:**
 1. **Create Google Sheets** following [GOOGLE_SHEETS_SETUP.md](GOOGLE_SHEETS_SETUP.md)
 2. **Update URLs** in `sync_from_sheet.py`
-3. **Sync data**: `python sync_from_sheet.py`
+3. **Export data**: `python export_to_sheet.py`
 
 **Usage:**
-- **Manual sync**: `python sync_from_sheet.py`
-- **Auto sync on startup**: Set `SYNC_ON_STARTUP=true` in `.env`
-- **Scheduled sync**: Every 15 minutes (already configured)
+- **Export to CSV**: `python export_to_sheet.py`
+- **Import from CSV**: `python sync_from_sheet.py`
 
-### Option B: Git Database Sharing (Current Setup)
+### Option C: Git Database Sharing (Current Setup)
 
 **For teams who prefer:**
 - ✅ **Simple setup** (database included in Git)
