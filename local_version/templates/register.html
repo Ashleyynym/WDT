@@ -12,7 +12,10 @@
                     <form method="POST" action="{{ url_for('users.register') }}" id="registerForm">
                         <div class="mb-3">
                             <label for="username" class="form-label">{{ _('Username') }}</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
+                            <input type="text" class="form-control" id="username" name="username" required onblur="validateUsername()">
+                            <div id="usernameWarning" class="invalid-feedback" style="display: none;">
+                                {{ _('This username is already taken.') }}
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -24,7 +27,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="password" class="form-label">{{ _('Password') }}</label>
+                            <label for="password" class="form-label">{{ _('Password') }} <span class="text-muted" style="font-size:0.9em">({{ _('Case sensitive') }})</span></label>
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
 
@@ -34,6 +37,15 @@
                             <div id="confirmPasswordWarning" class="invalid-feedback" style="display: none;">
                                 {{ _('Passwords do not match.') }}
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">{{ _('First Name') }}</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">{{ _('Last Name') }}</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
                         </div>
 
                         <div class="mb-3">
@@ -146,11 +158,47 @@ function checkEmailDomain(email, emailInput, emailWarning) {
     });
 }
 
+function validateUsername() {
+    const usernameInput = document.getElementById('username');
+    const usernameWarning = document.getElementById('usernameWarning');
+    const username = usernameInput.value.trim();
+    if (!username) {
+        usernameInput.classList.remove('is-invalid', 'is-valid');
+        usernameWarning.style.display = 'none';
+        return;
+    }
+    fetch('/users/check_username', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.exists) {
+            usernameInput.classList.add('is-invalid');
+            usernameInput.classList.remove('is-valid');
+            usernameWarning.style.display = 'block';
+            usernameWarning.textContent = data.message || 'This username is already taken.';
+        } else {
+            usernameInput.classList.remove('is-invalid');
+            usernameInput.classList.add('is-valid');
+            usernameWarning.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        usernameInput.classList.remove('is-invalid', 'is-valid');
+        usernameWarning.style.display = 'none';
+    });
+}
+
 // Wait for DOM to be fully loaded before adding event listeners
 document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirm_password');
+    const usernameInput = document.getElementById('username');
     
     if (emailInput) {
         emailInput.addEventListener('input', validateEmail);
@@ -161,6 +209,11 @@ document.addEventListener('DOMContentLoaded', function() {
         passwordInput.addEventListener('input', validatePasswordConfirmation);
         confirmPasswordInput.addEventListener('input', validatePasswordConfirmation);
         confirmPasswordInput.addEventListener('blur', validatePasswordConfirmation);
+    }
+
+    if (usernameInput) {
+        usernameInput.addEventListener('input', validateUsername);
+        usernameInput.addEventListener('blur', validateUsername);
     }
 });
 </script>

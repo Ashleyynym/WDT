@@ -88,10 +88,38 @@
                 <a class="nav-link d-inline" href="{{ url_for('set_locale', lang_code='en') }}" style="color: #fff;">EN</a> |
                 <a class="nav-link d-inline" href="{{ url_for('set_locale', lang_code='zh') }}" style="color: #fff;">中文</a>
             </div>
-            <!-- User Info -->
+            <!-- User Info Dropdown -->
             {% if current_user.is_authenticated %}
-                <span class="navbar-text me-2" style="color: #fff;">{{ _('Logged in as') }} {{ current_user.username }}</span>
-                <a class="nav-link" href="{{ url_for('users.logout') }}" style="color: #fff;">{{ _('Logout') }}</a>
+            <div class="nav-item dropdown me-3">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #fff;">
+                    {% if current_user.profile_pic %}
+                        <img src="{{ current_user.profile_pic }}" alt="Profile" class="rounded-circle me-2" width="36" height="36" style="object-fit: cover; border: 2px solid #fff;">
+                    {% else %}
+                        <span class="rounded-circle me-2 d-flex justify-content-center align-items-center" style="width:36px; height:36px; background: #6c757d; color: #fff; font-weight: 600; font-size: 1.1rem; border: 2px solid #fff;">
+                            {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                        </span>
+                    {% endif %}
+                    <span class="fw-semibold">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown" style="min-width: 220px;">
+                    <li class="text-center py-2">
+                        {% if current_user.profile_pic %}
+                            <img src="{{ current_user.profile_pic }}" alt="Profile" class="rounded-circle mb-1" width="56" height="56" style="object-fit: cover; border: 2px solid #dee2e6;">
+                        {% else %}
+                            <span class="rounded-circle mb-1 d-flex justify-content-center align-items-center mx-auto" style="width:56px; height:56px; background: #adb5bd; color: #fff; font-weight: 700; font-size: 1.5rem; border: 2px solid #dee2e6;">
+                                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+                            </span>
+                        {% endif %}
+                        <div class="fw-bold">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+                        <div class="text-muted small">{{ current_user.email }}</div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('users.public_profile', user_id=current_user.id) }}">{{ _('View Profile') }}</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('users.edit_profile') }}">{{ _('Edit Profile') }}</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('users.logout') }}">{{ _('Logout') }}</a></li>
+                </ul>
+            </div>
             {% else %}
                 <a class="nav-link" href="{{ url_for('users.login') }}" style="color: #fff;">{{ _('Login') }}</a>
             {% endif %}

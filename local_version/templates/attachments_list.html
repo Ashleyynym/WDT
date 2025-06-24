@@ -50,7 +50,15 @@
                 <td>
                     <span class="badge bg-secondary">{{ attachment.file_type or 'Unknown' }}</span>
                 </td>
-                <td>{{ attachment.uploader.username if attachment.uploader else 'Unknown' }}</td>
+                <td>
+                    {% if attachment.uploader %}
+                        <a href="{{ url_for('users.public_profile', user_id=attachment.uploader.id) }}">
+                            {{ attachment.uploader.first_name }} {{ attachment.uploader.last_name[0] }}.
+                        </a>
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </td>
                 <td>{{ format_datetime_with_timezone(attachment.local_time) if attachment.local_time else format_datetime_with_timezone(attachment.uploaded_at) }}</td>
                 <td>{{ "%.2f"|format(attachment.file_size / 1024 / 1024) }} MB</td>
                 <td>
@@ -95,4 +103,4 @@ function applyFilters() {
     window.location.href = url;
 }
 </script>
-{% endblock %} 
+{% endblock %}

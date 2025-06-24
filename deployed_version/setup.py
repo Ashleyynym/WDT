@@ -104,6 +104,9 @@ echo ""
 echo "To deactivate, type: deactivate"
 """
         script_file = "activate.sh"
+        # Write the script before changing permissions
+        with open(script_file, 'w') as f:
+            f.write(script_content)
         # Make the script executable
         os.chmod(script_file, 0o755)
     
@@ -202,4 +205,4 @@ def main():
     print("   python run.py\n")
 
 if __name__ == "__main__":
-    main() 
+    main()

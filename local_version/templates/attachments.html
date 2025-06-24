@@ -42,7 +42,15 @@
                                         <td>{% if att.file_type %}<span class="badge bg-secondary">{{ att.file_type }}</span>{% endif %}</td>
                                         <td style="min-width: 180px;">{{ att.local_time.strftime('%Y-%m-%d %H:%M') if att.local_time else att.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                         <td style="min-width: 120px;">{% if att.file_size %}{{ att.get_file_size_mb() }} MB{% endif %}</td>
-                                        <td style="min-width: 150px;">{{ att.uploader.username }}</td>
+                                        <td style="min-width: 150px;">
+                                            {% if att.uploader %}
+                                                <a href="{{ url_for('users.public_profile', user_id=att.uploader.id) }}">
+                                                    {{ att.uploader.first_name }} {{ att.uploader.last_name[0] }}.
+                                                </a>
+                                            {% else %}
+                                                Unknown
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 {% else %}

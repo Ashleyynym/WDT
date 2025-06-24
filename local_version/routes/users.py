@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_user, logout_user, login_required, current_user
-from models import User, Role, db, PERMISSIONS
+from models_new import User
+from models import Role, db, PERMISSIONS
 from werkzeug.security import generate_password_hash
 from flask_babel import _
 import re
@@ -120,13 +121,17 @@ def register():
     """
     if request.method == 'POST':
         username    = request.form.get('username')
+        if username:
+            username = username.lower().strip()
         email       = request.form.get('email')
         password    = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         role_name   = request.form.get('role_name')  # now a role name string
+        first_name  = request.form.get('first_name', '').strip()
+        last_name   = request.form.get('last_name', '').strip()
 
         # Basic form validation
-        if not username or not email or not password or not confirm_password or not role_name:
+        if not username or not email or not password or not confirm_password or not role_name or not first_name or not last_name:
             flash(_("All fields are required."), "danger")
             return redirect(url_for('users.register'))
 
@@ -136,8 +141,8 @@ def register():
             return redirect(url_for('users.register'))
 
         # Check if username already exists
-        if User.query.filter_by(username=username).first():
-            flash(_("Username already exists."), "danger")
+        if User.query.filter(db.func.lower(User.username) == username).first():
+            flash(_("Username already exists (not case sensitive)."), "danger")
             return redirect(url_for('users.register'))
 
         # Check if email already exists
@@ -158,6 +163,8 @@ def register():
         new_user.email = email
         new_user.role_id = role.id
         new_user.set_password(password)
+        new_user.first_name = first_name
+        new_user.last_name = last_name
         db.session.add(new_user)
         db.session.commit()
 
@@ -174,9 +181,11 @@ def login():
     
     if request.method == "POST":
         username = request.form.get("username")
+        if username:
+            username = username.lower().strip()
         password = request.form.get("password")
         
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter(db.func.lower(User.username) == username).first()
         
         if user is None:
             flash(_("Username does not exist. Please check your username or register for a new account."), "warning")
@@ -212,7 +221,7 @@ def login():
             display_name = timezone_names.get(session['timezone'], session['timezone'])
             flash(_("Your current timezone is <b>%(tz)s</b>.<br><span style='font-size:0.97em;'>If this is incorrect, change it in the top bar.</span>" , tz=display_name), "danger")
             # Always flash a welcome message after login (short)
-            flash(_("Welcome, %(username)s!", username=user.username), "success")
+            flash(_("Welcome, %(name)s!", name=f"{user.first_name} {user.last_name}"), "success")
             
             if not next_page or not next_page.startswith('/'):
                 next_page = url_for("dashboard.dashboard_home")
@@ -316,4 +325,31 @@ def update_role_permissions():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Error updating role permissions: {str(e)}'})
+
+@bp.route('/check_username', methods=['POST'])
+def check_username():
+    data = request.get_json()
+    username = data.get('username', '').strip().lower()
+    exists = bool(User.query.filter(db.func.lower(User.username) == username).first())
+    return jsonify({'exists': exists, 'message': _('This username is already taken.') if exists else ''})
+
+@bp.route('/profile/<int:user_id>')
+def public_profile(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('public_profile.html', user=user)
+
+@bp.route('/edit-profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    if request.method == 'POST':
+        current_user.first_name = request.form.get('first_name', current_user.first_name)
+        current_user.last_name = request.form.get('last_name', current_user.last_name)
+        current_user.profile_pic = request.form.get('profile_pic', current_user.profile_pic)
+        current_user.company_affiliation = request.form.get('company_affiliation', current_user.company_affiliation)
+        current_user.phone_number = request.form.get('phone_number', current_user.phone_number)
+        current_user.additional_details = request.form.get('additional_details', current_user.additional_details)
+        db.session.commit()
+        flash(_('Profile updated successfully.'), 'success')
+        return redirect(url_for('users.public_profile', user_id=current_user.id))
+    return render_template('edit_profile.html', user=current_user)
 

@@ -3,7 +3,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
 from datetime import datetime
-from models import Cargo, db, EventLog, StatusMilestone
+from models_new import Cargo, db, EventLog, StatusMilestone
 from flask_login import current_user
 from flask_babel import _
 from functools import wraps
@@ -249,11 +249,20 @@ def edit_cargo(cargo_id):
             flash("Invalid date format.", "error")
             return redirect(url_for('cargo.edit_cargo', cargo_id=cargo_id))
         
+        # Set last changed by
+        cargo.last_changed_by = current_user
         db.session.commit()
         flash("Cargo updated successfully.", "success")
         return redirect(url_for('cargo.cargo_detail', cargo_id=cargo.id))
     
     return render_template('edit_cargo.html', cargo=cargo)
+
+@bp.route('/<int:cargo_id>/edit', methods=['GET', 'POST'])
+def edit_cargo_alt(cargo_id):
+    """
+    Redirect /cargo/<cargo_id>/edit to /cargo/edit/<cargo_id> for compatibility.
+    """
+    return redirect(url_for('cargo.edit_cargo', cargo_id=cargo_id))
 
 @bp.route('/batch-edit', methods=['POST'])
 @login_required

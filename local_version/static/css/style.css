@@ -258,7 +258,6 @@ nav a:hover::after {
 }
 
 .card:hover {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
@@ -314,6 +313,7 @@ nav a:hover::after {
     font-size: 0.95rem;
   transition: var(--transition-normal);
   color: var(--color-dark);
+  min-height: 48px; /* Prevents form from shifting when showing feedback */
 }
 
 .form-control:focus, .form-select:focus {
@@ -1032,4 +1032,18 @@ h2 {
 
 #content-wrapper {
     padding-top: 72px !important;
+}
+
+.invalid-feedback {
+  min-height: 1.5em; /* Reserve space for feedback, prevents layout shift */
+  display: block;
+  visibility: hidden;
+}
+
+.is-invalid ~ .invalid-feedback {
+  visibility: visible;
+}
+
+.is-valid ~ .invalid-feedback {
+  visibility: hidden;
 }

@@ -1,3 +1,20 @@
+# 👥 **Quick Steps for Team Members (Internal Use Only)**
+
+1. **Redirect to local version:**
+   ```bash
+   cd local_version
+   ```
+2. **Set up virtual environment:**
+   ```bash
+   python setup.py
+   ```
+3. **Run the program:**
+   ```bash
+   python run.py
+   ```
+
+---
+
 # WDT Supply Chain - Air Cargo Management System
 
 A comprehensive end-to-end air freight operation management system for WDT Supply Chain.

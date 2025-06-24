@@ -60,6 +60,20 @@
                             {% endif %}
                         </div>
                     </div>
+                    <!-- Add last changed by info for cargo -->
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>{{ _('Last Changed By:') }}</strong></div>
+                        <div class="col-8">
+                            {% if cargo.last_changed_by %}
+                                <a href="{{ url_for('users.public_profile', user_id=cargo.last_changed_by.id) }}">
+                                    {{ cargo.last_changed_by.first_name }} {{ cargo.last_changed_by.last_name[0] }}.
+                                </a>
+                                ({{ cargo.updated_at.strftime('%Y-%m-%d %H:%M') if cargo.updated_at else '' }})
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -121,7 +135,14 @@
                                         <span class="badge bg-secondary ms-2">{{ att.file_type }}</span>
                                     {% endif %}
                                     <br>
-                                    <small class="text-muted">{{ _('By') }} {{ att.uploader.username }} on {{ att.uploaded_at.strftime('%Y-%m-%d') }}</small>
+                                    <small class="text-muted">{{ _('By') }} 
+                                        {% if att.uploader %}
+                                            <a href="{{ url_for('users.public_profile', user_id=att.uploader.id) }}">
+                                                {{ att.uploader.first_name }} {{ att.uploader.last_name[0] }}.
+                                            </a>
+                                        {% else %}Unknown{% endif %} 
+                                        on {{ att.uploaded_at.strftime('%Y-%m-%d') }}
+                                    </small>
                                 </div>
                             </div>
         {% endfor %}

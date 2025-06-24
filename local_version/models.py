@@ -7,7 +7,7 @@ from extensions import db, login_manager
 
 # Import all models from models_new.py to avoid duplicates
 from models_new import (
-    responsible_association, User, Role, Feature, RoleFeature, UserOverride,
+    responsible_association, Role, Feature, RoleFeature, UserOverride,
     Cargo, Attachment, Bill, EventLog, EmailLog, ExternalContact, 
     EmailTemplate, StatusMilestone
 )

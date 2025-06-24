@@ -48,9 +48,9 @@ instance/
 .webassets-cache
 
 # Database files (exclude from Git)
-*.db
-*.sqlite
-*.sqlite3
+#*.db
+#*.sqlite
+#*.sqlite3
 
 # Logs
 *.log
@@ -81,4 +81,4 @@ service-account-key.json
 # Google Sheets references (COMMENTED OUT TO SHARE DATABASE)
 # *.gsheet
 # *.gsheet3
-# *.gsheet4 
+# *.gsheet4

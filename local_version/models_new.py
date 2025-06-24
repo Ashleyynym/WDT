@@ -51,7 +51,7 @@ class UserOverride(db.Model):
     __tablename__ = 'user_overrides'
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # FIX: correct table name
     feature_id = db.Column(db.Integer, db.ForeignKey('features.id'), nullable=False)
     granted = db.Column(db.Boolean, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -81,7 +81,7 @@ class MAWB(db.Model):
     volume = db.Column(db.Numeric(10, 2))
     description = db.Column(db.Text)
     notes = db.Column(db.Text)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -134,11 +134,11 @@ class MAWBEvent(db.Model):
     event_type = db.Column(db.String(100), nullable=False)
     event_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     details = db.Column(db.JSON)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    user = db.relationship('User')
+    user = db.relationship('User', foreign_keys=[created_by])
 
 class HAWBEvent(db.Model):
     __tablename__ = 'hawb_events'
@@ -148,11 +148,11 @@ class HAWBEvent(db.Model):
     event_type = db.Column(db.String(100), nullable=False)
     event_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     details = db.Column(db.JSON)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    user = db.relationship('User')
+    user = db.relationship('User', foreign_keys=[created_by])
 
 class WorkflowStep(db.Model):
     __tablename__ = 'workflow_steps'
@@ -208,11 +208,11 @@ class AuditLog(db.Model):
     action = db.Column(db.String(20), nullable=False)  # INSERT, UPDATE, DELETE
     old_values = db.Column(db.JSON)
     new_values = db.Column(db.JSON)
-    changed_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    changed_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     changed_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
     # Relationships
-    user = db.relationship('User')
+    user = db.relationship('User', foreign_keys=[changed_by])
 
 # ============================================================================
 # ENHANCED EXISTING MODELS
@@ -222,7 +222,7 @@ class AuditLog(db.Model):
 responsible_association = db.Table(
     'responsible_association',
     db.Column('cargo_id', db.Integer, db.ForeignKey('cargo.id'), primary_key=True),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
 class Role(db.Model):
@@ -300,7 +300,7 @@ DEFAULT_ROLES = {
 }
 
 class User(UserMixin, db.Model):
-    __tablename__ = "user"
+    __tablename__ = "users"  # Use plural to match migration and schema
     id             = db.Column(db.Integer, primary_key=True)
     username       = db.Column(db.String(64), unique=True, nullable=False)
     email          = db.Column(db.String(120), unique=True, nullable=False)
@@ -308,6 +308,12 @@ class User(UserMixin, db.Model):
     role_id        = db.Column(db.Integer, db.ForeignKey('role.id'))
     created_at     = db.Column(db.DateTime, default=datetime.utcnow)
     is_active      = db.Column(db.Boolean, default=True)
+    first_name     = db.Column(db.String(64), nullable=False)
+    last_name      = db.Column(db.String(64), nullable=False)
+    profile_pic    = db.Column(db.String(256))
+    company_affiliation = db.Column(db.String(128))
+    phone_number   = db.Column(db.String(32))
+    additional_details = db.Column(db.Text)
 
     assigned_cargos = db.relationship(
         'Cargo',
@@ -316,13 +322,21 @@ class User(UserMixin, db.Model):
     )
     
     # New relationships for enhanced permissions
-    user_overrides = db.relationship('UserOverride', backref='user', lazy='dynamic')
+    user_overrides = db.relationship('UserOverride', backref='user', lazy='dynamic', foreign_keys='UserOverride.user_id')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    @staticmethod
+    def normalize_username(username):
+        return username.lower().strip() if username else ''
+
+    @classmethod
+    def get_by_username(cls, username):
+        return cls.query.filter(db.func.lower(cls.username) == username.lower().strip()).first()
     
     def has_permission(self, permission):
         """Check if user has specific permission"""
@@ -360,6 +374,18 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f"<User {self.username}>"
+    
+    def display_name_initial(self):
+        """Return 'FirstName L.' format for display."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name[0]}."
+        elif self.first_name:
+            return self.first_name
+        return self.username
+
+    def get_profile_url(self):
+        from flask import url_for
+        return url_for('users.public_profile', user_id=self.id)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -386,6 +412,8 @@ class Cargo(db.Model):
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_archived   = db.Column(db.Boolean, default=False)
+    last_changed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    last_changed_by = db.relationship('User', foreign_keys=[last_changed_by_id], backref='changed_cargos')
 
     responsibles = db.relationship(
         'User',
@@ -429,7 +457,7 @@ class Attachment(db.Model):
     file_type   = db.Column(db.String(50))  # ISC Payment, DO, Inspection, etc.
     file_size   = db.Column(db.Integer)  # File size in bytes
     mime_type   = db.Column(db.String(100))
-    uploader_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
     notes       = db.Column(db.String(200))
     is_archived = db.Column(db.Boolean, default=False)
@@ -473,7 +501,7 @@ class Bill(db.Model):
     payment_date    = db.Column(db.DateTime, nullable=True)
     invoice_number  = db.Column(db.String(50), nullable=True)
     uploaded_at     = db.Column(db.DateTime, default=datetime.utcnow)
-    uploaded_by_id  = db.Column(db.Integer, db.ForeignKey('user.id'))
+    uploaded_by_id  = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     notes           = db.Column(db.String(200))
     is_archived     = db.Column(db.Boolean, default=False)
 
@@ -500,7 +528,7 @@ class EventLog(db.Model):
     cargo_id        = db.Column(db.Integer, db.ForeignKey('cargo.id'), nullable=False)
     timestamp       = db.Column(db.DateTime, default=datetime.utcnow)
     description     = db.Column(db.String(200), nullable=False)
-    performed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    performed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
 
     performed_by = db.relationship('User', backref='event_logs')
 
@@ -516,7 +544,7 @@ class EmailLog(db.Model):
     subject       = db.Column(db.String(200))
     body          = db.Column(db.Text)
     sent_at       = db.Column(db.DateTime, default=datetime.utcnow)
-    sent_by_id    = db.Column(db.Integer, db.ForeignKey('user.id'))
+    sent_by_id    = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
 
     sent_by = db.relationship('User', backref='sent_emails')
 
@@ -549,7 +577,7 @@ class EmailTemplate(db.Model):
     variables   = db.Column(db.Text)  # JSON string of available variables
     category    = db.Column(db.String(50))  # Truck Dispatch, Inspection Notice, etc.
     is_active   = db.Column(db.Boolean, default=True)
-    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
     created_at  = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at  = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -582,9 +610,9 @@ class StatusMilestone(db.Model):
     milestone_type = db.Column(db.String(50), nullable=False)  # PRE-ALERT, Payment, Inspection, DO received, POD signed, etc.
     timestamp     = db.Column(db.DateTime, default=datetime.utcnow)
     notes         = db.Column(db.String(200))
-    completed_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    completed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # FIX: correct table name
 
     completed_by = db.relationship('User', backref='completed_milestones')
 
     def __repr__(self):
-        return f"<StatusMilestone {self.milestone_type} at {self.timestamp}>" 
+        return f"<StatusMilestone {self.milestone_type} at {self.timestamp}>"

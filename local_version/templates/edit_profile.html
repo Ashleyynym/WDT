@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header"><h4>Edit Profile</h4></div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="profile_pic" class="form-label">Profile Picture URL</label>
+                            <input type="url" class="form-control" id="profile_pic" name="profile_pic" value="{{ user.profile_pic or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="company_affiliation" class="form-label">Company Affiliation</label>
+                            <input type="text" class="form-control" id="company_affiliation" name="company_affiliation" value="{{ user.company_affiliation or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone_number" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <select class="form-select" id="area_code" name="area_code" style="max-width: 120px;">
+                                    <option value="us" selected>🇺🇸 +1 (US/Canada)</option>
+                                    <option value="mx">🇲🇽 +52 (Mexico)</option>
+                                    <option value="ca">🇨🇦 +1 (Canada)</option>
+                                    <option value="uk">🇬🇧 +44 (UK)</option>
+                                    <option value="cn">🇨🇳 +86 (China)</option>
+                                    <option value="jp">🇯🇵 +81 (Japan)</option>
+                                    <!-- Add more as needed -->
+                                </select>
+                                <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ user.phone_number or '' }}" placeholder="(555) 123-4567">
+                            </div>
+                            <div id="phone-error"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="additional_details" class="form-label">Additional Details</label>
+                            <textarea class="form-control" id="additional_details" name="additional_details">{{ user.additional_details or '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <a href="{{ url_for('users.public_profile', user_id=user.id) }}" class="btn btn-secondary ms-2">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/phone_format.js') }}"></script>
+{% endblock %}
